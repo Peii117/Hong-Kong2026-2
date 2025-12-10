@@ -234,7 +234,7 @@
                                                 <p>
                                                     <i class="far fa-clock mr-1 text-royal-blue"></i>
                                                     <strong>{{ item.startTime }}</strong> - <strong>{{ item.endTime }}</strong>
-                                                    <span class="text-xs text-gray-500 ml-1">(停留{{ item.duration }})</span>
+                                                    <span class="text-xs text-gray-500 ml-1">(停留{{ formatDurationForDisplay(item.duration) }})</span>
                                                 </p>
                                                 <p v-if="item.address">
                                                     <i class="fas fa-map-marker-alt mr-1 text-deep-red"></i>地址: {{ item.address }}
@@ -274,7 +274,7 @@
             <section v-else-if="activeTab === 'info'" key="info" class="p-4">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-deep-red pl-2">旅行資訊</h2>
                 
-                <div class="bg-gray-50 p-4 rounded-xl mb-6 shadow-md border-t-4 border-royal-blue">
+                <div class="bg-blue-50 p-4 rounded-xl mb-6 shadow-md border-t-4 border-royal-blue">
                     <h3 class="font-bold text-lg mb-2 text-royal-blue">
                         <i class="fas fa-coins mr-1"></i>匯率換算 (HKD 兌 TWD)
                     </h3>
@@ -494,12 +494,15 @@
                         <div v-if="currentItem.category !== '交通' && currentItem.category !== '住宿' && currentItem.category !== '航班'">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold mb-1">停留時間 (例如: 2h30m, 1h)</label>
-                                    <input type="text" v-model="currentItem.duration" 
-                                           required 
-                                           placeholder="例如: 2h30m" 
-                                           pattern="(\d+h)?(\d+m)?"
-                                           class="w-full p-2 border rounded-md focus:ring-royal-blue focus:border-royal-blue">
+                                    <label class="block text-sm font-semibold mb-1">停留時間</label>
+                                    <select v-model="currentItem.duration" 
+                                            required 
+                                            class="w-full p-2 border rounded-md focus:ring-royal-blue focus:border-royal-blue">
+                                        <option value="">請選擇</option>
+                                        <option v-for="d in durationSlots" :key="d" :value="d">
+                                            {{ formatDurationForDisplay(d) }}
+                                        </option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">預計開始時間 (系統會自動連動)</label>
@@ -672,7 +675,6 @@
     const { createApp, ref, computed, watch, nextTick } = Vue;
 
     // --- Firebase Setup (已替換為您的配置) ---
-    // ⚠️ 這是程式碼能正常運行的關鍵！
     const firebaseConfig = {
         apiKey: "AIzaSyD-gOroKPdB2Ao0LDKNC1uEeTDcTRaAeao",
         authDomain: "hong-kong-2026.firebaseapp.com",
@@ -681,10 +683,8 @@
         storageBucket: "hong-kong-2026.firebasestorage.app",
         messagingSenderId: "302735565930",
         appId: "1:302735565930:web:f07ce32094f2e412865613",
-        // measurementId: "G-3D4GNSSBQ3" // measurementId 在 v8 SDK 中非必要
     };
 
-    // 檢查 Firebase 是否已初始化，如果沒有則初始化
     if (!firebase.apps.length) {
         try {
             firebase.initializeApp(firebaseConfig);
@@ -693,7 +693,6 @@
             alert("應用程式啟動失敗：Firebase 設定錯誤。請檢查程式碼中的 YOUR_FIREBASE_... 是否已替換。");
         }
     }
-    // 儲存資料的根路徑
     const FIREBASE_PATH = 'hongkongTripV5'; 
     // ------------------------------------------
     
@@ -723,36 +722,44 @@
         return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(timeStr);
     }
     
-    // 3. 取得日期對應的星期幾 (用於顯示今日營業時間)
     function getCurrentDay(dateStr) {
         const [year, month, day] = dateStr.split('/').map(Number);
-        // Date objects are 0-indexed for month, so month - 1
         const date = new Date(year, month - 1, day); 
-        const dayIndex = date.getDay(); // 0 (Sun) to 6 (Sat)
+        const dayIndex = date.getDay(); 
         return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayIndex];
     }
+    
+    // 將停留時間格式化為中文顯示
+    function formatDurationForDisplay(durationStr) {
+        if (!durationStr) return '';
+        const totalMinutes = parseDurationToMinutes(durationStr);
+        if (totalMinutes === 0) return '0分鐘';
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        let result = '';
+        if (hours > 0) result += `${hours}小時`;
+        if (minutes > 0) result += `${minutes}分鐘`;
+        return result.trim();
+    }
+
 
     // --- 核心時間連動計算引擎 (略) ---
     function computeDayTimes(day) {
         let currentTime = null;
-        const defaultStartTime = '09:00'; // 預設每日行程開始時間
+        const defaultStartTime = '09:00'; 
 
         day.items.forEach((item, index) => {
-            // 處理第一個項目或緊接在交通之後的項目
             if (index === 0 || day.items[index - 1].category === '交通' || day.items[index - 1].category === '住宿' || day.items[index - 1].category === '航班') {
                 if (isValidTimeFormat(item.startTime)) {
                     currentTime = item.startTime;
                 } else if (index === 0) {
-                    // 如果第一個項目沒有時間，則使用預設開始時間
                     item.startTime = defaultStartTime;
                     currentTime = item.startTime;
                 }
             } else if (currentTime) {
-                // 如果不是第一個項目，且不是交通/住宿/航班
                 let prevItem = day.items[index - 1];
                 let prevDurationMinutes = 0;
                 
-                // 檢查前一個項目的 duration/transportDuration
                 if (prevItem.category === '交通' && prevItem.transportDuration) {
                     prevDurationMinutes = parseDurationToMinutes(prevItem.transportDuration);
                 } else if (prevItem.duration) {
@@ -763,18 +770,15 @@
                 item.startTime = currentTime;
             }
 
-            // 計算結束時間 (僅限非交通、非住宿、非航班項目)
             if (item.category !== '交通' && item.category !== '住宿' && item.category !== '航班' && item.duration && isValidTimeFormat(item.startTime)) {
                 const stayDurationInMinutes = parseDurationToMinutes(item.duration);
                 item.endTime = addMinutesToTime(item.startTime, stayDurationInMinutes);
                 currentTime = item.endTime;
             } else if (item.category === '交通' && item.transportDuration && isValidTimeFormat(item.startTime)) {
-                // 交通項目的結束時間
                 item.endTime = addMinutesToTime(item.startTime, parseDurationToMinutes(item.transportDuration));
-                item.duration = item.transportDuration; // 交通的 duration 使用 transportDuration
+                item.duration = item.transportDuration; 
                 currentTime = item.endTime;
             } else if (item.category === '住宿' || item.category === '航班') {
-                // 住宿/航班不計入連續行程，只標註時間
                 if (isValidTimeFormat(item.endTime)) {
                      currentTime = item.endTime;
                 } else {
@@ -782,7 +786,7 @@
                     item.endTime = '';
                 }
             } else {
-                 item.endTime = ''; // 清除不適用的 endTime
+                 item.endTime = ''; 
             }
         });
     }
@@ -790,10 +794,8 @@
     // --- Vue App Setup ---
     createApp({
         setup() {
-            // Vue 3 Composition API 的 ref, computed, watch, nextTick
             const { ref, computed, watch, nextTick } = Vue;
 
-            // 讀取 UI 狀態 (略)
             const getInitialState = (key, defaultValue) => {
                 const localValue = localStorage.getItem(key);
                 if (localValue !== null) {
@@ -807,20 +809,15 @@
             };
 
             // --- 響應式狀態 (Responsive State) ---
-            // UI 狀態 (同步到 Firebase/LocalStorage)
             const isEditMode = ref(getInitialState('isEditMode', false));
             const activeTab = ref(getInitialState('activeTab', 'itinerary'));
             const activeDate = ref(getInitialState('activeDate', '2026/3/6'));
-            // 本地 UI 狀態
             const isMenuOpen = ref(false);
             const selectedShoppingCategory = ref('all');
             const categories = ['景點', '住宿', '美食', '購物', '交通', '其他'];
             const payers = ['沛晴', '芳晨', '玟妤'];
-            
-            // 2. 追蹤哪個項目被「滑動」顯示刪除按鈕
             const swipedItemId = ref(null);
             
-            // 模態視窗狀態 (略)
             const isModalOpen = ref(false);
             const isEditModalMode = ref(false);
             const modalTitle = ref('');
@@ -828,13 +825,11 @@
             const currentItem = ref(null);
             const currentItemDate = ref('');
             
-            // 拖曳相關狀態 (略)
             const dragStartIndex = ref(-1);
             const draggingDate = ref('');
             
-            // 匯率/花費相關 (略)
-            const exchangeRate = ref(4.00); // 模擬匯率 HKD:TWD = 1:4.00
-            const foreignAmount = ref(100); // 匯率換算初始值
+            const exchangeRate = ref(4.00); 
+            const foreignAmount = ref(100); 
 
             // 3. 星期幾和時間選項
             const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -847,6 +842,36 @@
                 }
                 return slots;
             })();
+            
+            // 1. 【更新】停留時間選項 (10分鐘到18小時)
+            const durationSlots = (() => {
+                const slots = [];
+                let totalMinutes = 0;
+                
+                // Part 1: 10 minutes to 50 minutes (10 min steps)
+                for (totalMinutes = 10; totalMinutes <= 50; totalMinutes += 10) {
+                    slots.push(`${totalMinutes}m`);
+                }
+
+                // Part 2: 1 hour (1h00m)
+                slots.push('1h00m');
+                
+                // Part 3: 1 hour 30 min (90 min) to 8 hours (480 min) (30 min steps)
+                for (totalMinutes = 90; totalMinutes <= 8 * 60; totalMinutes += 30) {
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+                    slots.push(`${hours}h${String(minutes).padStart(2, '0')}m`);
+                }
+                
+                // Part 4: 9 hours (540 min) to 18 hours (1080 min) (1 hour steps)
+                for (totalMinutes = 9 * 60; totalMinutes <= 18 * 60; totalMinutes += 60) {
+                    const hours = totalMinutes / 60;
+                    slots.push(`${hours}h00m`);
+                }
+
+                return slots;
+            })();
+
 
             // --- 核心資料 (與 Firebase 同步) ---
             const itineraryData = ref([]);
@@ -855,10 +880,6 @@
             const shoppingList = ref([]);
             const expenses = ref([]);
 
-            // 預設資料 (已更新結構)
-            const defaultOpeningHours = {Mon: '休息', Tue: '休息', Wed: '休息', Thu: '休息', Fri: '休息', Sat: '休息', Sun: '休息', notes: ''};
-            
-            // 創建一個幫助函數來生成一個新的 defaultOpeningHours 對象的副本
             const getNewDefaultOpeningHours = () => JSON.parse(JSON.stringify({Mon: '休息', Tue: '休息', Wed: '休息', Thu: '休息', Fri: '休息', Sat: '休息', Sun: '休息', notes: ''}));
 
             const defaultItinerary = [
@@ -866,7 +887,7 @@
                     date: '2026/3/6', dayOfWeek: 'FRI', items: [
                         { id: 1, category: '航班', name: '去程航班', flightNumber: 'JX233', fromAirport: 'TPE T2', toAirport: 'HKG T1', startTime: '08:00', endTime: '10:10', duration: '2h10m', airline: '星宇航空', notes: '登機前兩小時抵達機場', location: '香港國際機場', transport: '航班', transportDuration: '0m', address: '香港國際機場', openingHours: getNewDefaultOpeningHours() },
                         { id: 2, category: '交通', name: '機場快線到九龍站', startTime: '10:10', duration: '30m', endTime: '10:40', transportDuration: '30m', transport: '大眾運輸', notes: '購買八達通', location: '九龍站', address: '九龍站', openingHours: getNewDefaultOpeningHours() },
-                        { id: 3, category: '景點', name: '香港迪士尼樂園', startTime: '11:00', duration: '6h30m', endTime: '17:30', address: '香港大嶼山竹篙灣', ticket: '已購票', transportDuration: '5m', transport: '步行', notes: '晚上看遊樂園煙火', location: '香港迪士尼樂園', showHours: false, openingHours: {Mon: '10:30-21:30', Tue: '10:30-21:30', Wed: '10:30-21:30', Thu: '10:30-21:30', Fri: '10:30-21:30', Sat: '10:30-21:30', Sun: '10:30-21:30', notes: '請預約入園'}} ,
+                        { id: 3, category: '景點', name: '香港迪士尼樂園', startTime: '11:00', duration: '6h00m', endTime: '17:00', address: '香港大嶼山竹篙灣', ticket: '已購票', transportDuration: '5m', transport: '步行', notes: '晚上看遊樂園煙火', location: '香港迪士尼樂園', showHours: false, openingHours: {Mon: '10:30-21:30', Tue: '10:30-21:30', Wed: '10:30-21:30', Thu: '10:30-21:30', Fri: '10:30-21:30', Sat: '10:30-21:30', Sun: '10:30-21:30', notes: '請預約入園'}} ,
                         { id: 4, category: '住宿', name: '迪士尼好萊塢酒店', startTime: '17:00', duration: '1h', endTime: '18:00', address: '大嶼山香港迪士尼樂園', transportDuration: '20m', transport: '大眾運輸', notes: '米奇與好友海景客房', location: '迪士尼好萊塢酒店', openingHours: getNewDefaultOpeningHours() },
                     ]
                 },
@@ -874,15 +895,15 @@
                     date: '2026/3/7', dayOfWeek: 'SAT', items: [
                         { id: 5, category: '交通', name: '飯店接駁車轉地鐵', startTime: '08:30', duration: '1h15m', endTime: '09:45', transportDuration: '10m', transport: '大眾運輸', notes: '迪士尼線->欣澳->香港站', location: '香港金域假日酒店', address: '尖沙咀彌敦道50號', openingHours: getNewDefaultOpeningHours() },
                         { id: 6, category: '住宿', name: '香港金域假日酒店', startTime: '09:45', duration: '30m', endTime: '10:15', address: '尖沙咀彌敦道50號', transportDuration: '5m', transport: '步行', notes: 'N5/P3 出口有電梯', location: '香港金域假日酒店', openingHours: getNewDefaultOpeningHours() },
-                        { id: 7, category: '美食', name: '尖沙咀美食購物', startTime: '10:15', duration: '2h0m', endTime: '12:15', address: '尖沙咀廣東道', transportDuration: '10m', transport: '步行', notes: '開始吃美食及購物', location: '尖沙咀', showHours: false, openingHours: {Mon: '10:00-20:00', Tue: '10:00-20:00', Wed: '10:00-20:00', Thu: '10:00-20:00', Fri: '10:00-20:00', Sat: '10:00-22:00', Sun: '10:00-22:00', notes: '請避開假日人潮'}},
-                        { id: 8, category: '景點', name: '山頂纜車 (中環)', startTime: '12:45', duration: '3h0m', endTime: '15:45', address: '香港中環花園道33號', transportDuration: '30m', transport: '大眾運輸', notes: '預先購買快速通關', location: '山頂纜車總站', showHours: false, openingHours: {Mon: '07:00-22:00', Tue: '07:00-22:00', Wed: '07:00-22:00', Thu: '07:00-22:00', Fri: '07:00-22:00', Sat: '07:00-23:00', Sun: '07:00-23:00', notes: '中環花園道山頂纜車總站'}},
+                        { id: 7, category: '美食', name: '尖沙咀美食購物', startTime: '10:15', duration: '2h00m', endTime: '12:15', address: '尖沙咀廣東道', transportDuration: '10m', transport: '步行', notes: '開始吃美食及購物', location: '尖沙咀', showHours: false, openingHours: {Mon: '10:00-20:00', Tue: '10:00-20:00', Wed: '10:00-20:00', Thu: '10:00-20:00', Fri: '10:00-20:00', Sat: '10:00-22:00', Sun: '10:00-22:00', notes: '請避開假日人潮'}},
+                        { id: 8, category: '景點', name: '山頂纜車 (中環)', startTime: '12:45', duration: '3h00m', endTime: '15:45', address: '香港中環花園道33號', transportDuration: '30m', transport: '大眾運輸', notes: '預先購買快速通關', location: '山頂纜車總站', showHours: false, openingHours: {Mon: '07:00-22:00', Tue: '07:00-22:00', Wed: '07:00-22:00', Thu: '07:00-22:00', Fri: '07:00-22:00', Sat: '07:00-23:00', Sun: '07:00-23:00', notes: '中環花園道山頂纜車總站'}},
                         { id: 9, category: '美食', name: '中環晚餐', startTime: '18:00', duration: '1h30m', endTime: '19:30', address: '蘭桂坊', transportDuration: '10m', transport: '步行', notes: '蘭桂坊附近餐廳', location: '中環', showHours: false, openingHours: {Mon: '18:00-02:00', Tue: '18:00-02:00', Wed: '18:00-02:00', Thu: '18:00-02:00', Fri: '18:00-03:00', Sat: '18:00-03:00', Sun: '18:00-02:00', notes: '建議事先訂位'}},
-                        { id: 10, category: '景點', name: '維多利亞港夜景', startTime: '20:00', duration: '1h0m', endTime: '21:00', address: '尖沙咀星光大道', transportDuration: '30m', transport: '大眾運輸', notes: '星光大道散步', location: '維多利亞港', showHours: false, openingHours: getNewDefaultOpeningHours() }
+                        { id: 10, category: '景點', name: '維多利亞港夜景', startTime: '20:00', duration: '1h00m', endTime: '21:00', address: '尖沙咀星光大道', transportDuration: '30m', transport: '大眾運輸', notes: '星光大道散步', location: '維多利亞港', showHours: false, openingHours: getNewDefaultOpeningHours() }
                     ]
                 },
                 {
                     date: '2026/3/8', dayOfWeek: 'SUN', items: [
-                        { id: 11, category: '購物', name: '市區買蛋塔伴手禮', startTime: '10:00', duration: '1h0m', endTime: '11:00', address: '泰昌餅家分店', transportDuration: '5m', transport: '步行', notes: '泰昌餅家', location: '尖沙咀', showHours: false, openingHours: {Mon: '10:00-20:00', Tue: '10:00-20:00', Wed: '10:00-20:00', Thu: '10:00-20:00', Fri: '10:00-20:00', Sat: '10:00-20:00', Sun: '10:00-20:00', notes: '泰昌餅家'}},
+                        { id: 11, category: '購物', name: '市區買蛋塔伴手禮', startTime: '10:00', duration: '1h00m', endTime: '11:00', address: '泰昌餅家分店', transportDuration: '5m', transport: '步行', notes: '泰昌餅家', location: '尖沙咀', showHours: false, openingHours: {Mon: '10:00-20:00', Tue: '10:00-20:00', Wed: '10:00-20:00', Thu: '10:00-20:00', Fri: '10:00-20:00', Sat: '10:00-20:00', Sun: '10:00-20:00', notes: '泰昌餅家'}},
                         { id: 12, category: '交通', name: '機場快線', startTime: '11:15', duration: '45m', endTime: '12:00', transportDuration: '15m', transport: '大眾運輸', notes: '尖沙嘴>香港站>機場快線', location: '香港國際機場', address: '香港國際機場', openingHours: getNewDefaultOpeningHours() },
                         { id: 13, category: '航班', name: '回程航班', flightNumber: 'CI910', fromAirport: 'HKG T1', toAirport: 'TPE T1', startTime: '14:04', endTime: '15:50', duration: '1h46m', airline: '中華航空', notes: '登機前三小時抵達機場', location: '香港國際機場', transport: '航班', transportDuration: '0m', address: '香港國際機場', openingHours: getNewDefaultOpeningHours() },
                     ]
@@ -930,7 +951,6 @@
                         shoppingList.value = data.shopping || initialData.shopping;
                         expenses.value = data.expenses || initialData.expenses;
                         
-                        // 確保載入時重新計算時間
                         itineraryData.value.forEach(day => computeDayTimes(day));
 
                         if(data.uiState) {
@@ -939,19 +959,17 @@
                             activeDate.value = data.uiState.activeDate || '2026/3/6';
                         }
                     } else {
-                        // 如果資料庫為空，寫入預設資料
                         saveAllData(initialData);
                     }
                 });
             } else {
-                 // 如果 Firebase 初始化失敗，使用預設的 Local 數據
-                itineraryData.value = defaultItinerary;
-                flightInfo.value = initialData.flightInfo;
-                accommodationInfo.value = initialData.accommodationInfo;
-                shoppingList.value = initialData.shopping;
-                expenses.value = initialData.expenses;
-                itineraryData.value.forEach(day => computeDayTimes(day));
-                console.warn("Firebase 無法連線，應用程式將使用本地預設資料且無法同步。");
+                 itineraryData.value = defaultItinerary;
+                 flightInfo.value = initialData.flightInfo;
+                 accommodationInfo.value = initialData.accommodationInfo;
+                 shoppingList.value = initialData.shopping;
+                 expenses.value = initialData.expenses;
+                 itineraryData.value.forEach(day => computeDayTimes(day));
+                 console.warn("Firebase 無法連線，應用程式將使用本地預設資料且無法同步。");
             }
 
 
@@ -976,7 +994,6 @@
             };
             
             const triggerSave = () => {
-                // 執行保存前，確保 itineraryData 至少有一個預設結構，防止被空資料覆寫
                 if (itineraryData.value.length === 0) {
                      itineraryData.value = defaultItinerary;
                      console.warn("警告：ItineraryData 為空，已重置為預設行程以防止資料庫被清空。");
@@ -996,17 +1013,17 @@
             watch(isEditMode, (newVal) => { 
                 localStorage.setItem('isEditMode', JSON.stringify(newVal));
                 if(dbRef) dbRef.child('uiState/isEditMode').set(newVal); 
-                if(!newVal) swipedItemId.value = null; // 退出編輯模式時隱藏刪除按鈕
+                if(!newVal) swipedItemId.value = null; 
             });
             watch(activeTab, (newVal) => { 
                 localStorage.setItem('activeTab', JSON.stringify(newVal));
                 if(dbRef) dbRef.child('uiState/activeTab').set(newVal); 
-                swipedItemId.value = null; // 切換 Tab 時隱藏刪除按鈕
+                swipedItemId.value = null; 
             });
             watch(activeDate, (newVal) => { 
                 localStorage.setItem('activeDate', JSON.stringify(newVal));
                 if(dbRef) dbRef.child('uiState/activeDate').set(newVal); 
-                swipedItemId.value = null; // 切換日期時隱藏刪除按鈕
+                swipedItemId.value = null; 
             });
             watch(expenses, () => {
                 expenses.value.forEach(item => {
@@ -1020,7 +1037,6 @@
 
             // --- 輔助函式 (Computed & Methods) ---
 
-            // Computed 屬性 (略)
             const filteredShoppingList = computed(() => {
                 if (selectedShoppingCategory.value === 'all') {
                     return shoppingList.value;
@@ -1032,7 +1048,6 @@
                 return expenses.value.reduce((sum, item) => sum + item.amountTWD, 0);
             });
 
-            // Helper Methods (略)
             const getWeatherIcon = (weather) => {
                 if (weather === 'Sunny') return 'fas fa-sun';
                 return 'fas fa-cloud-sun';
@@ -1043,7 +1058,7 @@
                 if (category === '美食') return 'bg-yellow-100 text-yellow-700';
                 if (category === '購物') return 'bg-purple-100 text-purple-700';
                 if (category === '交通') return 'bg-gray-100 text-gray-700';
-                return 'bg-deep-red/10 text-deep-red'; // 景點 & 其他
+                return 'bg-deep-red/10 text-deep-red'; 
             };
 
             const getTransportIcon = (transport) => {
@@ -1054,23 +1069,21 @@
                 return 'fas fa-bus-alt';
             };
             
+            // Google Maps 導航連結 (已修正)
             const openGoogleMaps = (location) => {
                 const encodedLocation = encodeURIComponent(location);
-                // 使用標準 Google Maps 查詢 URL 格式，讓地圖 App 或網頁開啟並搜尋地點
-                const mapUrl = `http://googleusercontent.com/maps.google.com/?q=${encodedLocation}`;
+                // 修正為標準的 Google Maps 查詢 URL
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
                 window.open(mapUrl, '_blank');
             };
 
-            // 關閉 Modal 時清除 swipedItemId
             const closeModal = () => { 
                 isModalOpen.value = false; 
                 currentItem.value = null; 
-                swipedItemId.value = null; // 確保關閉刪除按鈕
+                swipedItemId.value = null; 
             };
 
             // --- 模態視窗操作邏輯 ---
-
-            // 3. 【新輔助函數】將結構化營業時間合併成字串 (用於儲存)
             const formatOpeningHours = (hoursObject) => {
                 const formatted = { notes: hoursObject.notes || '' };
                 daysOfWeek.forEach(day => {
@@ -1081,7 +1094,6 @@
                     } else if (start && end) {
                         formatted[day] = `${start}-${end}`;
                     } else if (start) {
-                        // 如果只有開始時間，但沒有結束時間，則視為休息
                         formatted[day] = '休息'; 
                         console.warn(`[${day}] 只有設定開始時間 (${start})，但無結束時間，已視為休息。`);
                     } else {
@@ -1091,7 +1103,6 @@
                 return formatted;
             }
             
-            // 3. 【新輔助函數】將字串營業時間分解成結構化物件 (用於編輯)
             const parseOpeningHours = (hoursObject) => {
                 const parsed = { notes: hoursObject.notes || '' };
                 daysOfWeek.forEach(day => {
@@ -1113,7 +1124,6 @@
                 modalType.value = 'itinerary';
                 modalTitle.value = '新增行程項目';
                 
-                // 3. 初始化結構化營業時間輸入
                 const initialHours = {};
                 daysOfWeek.forEach(day => {
                     initialHours[day + 'Start'] = '';
@@ -1122,36 +1132,27 @@
                 initialHours.notes = '';
                 
                 currentItem.value = {
-                    id: Date.now(), name: '', category: '景點', startTime: '', duration: '1h0m', endTime: '', 
+                    id: Date.now(), name: '', category: '景點', startTime: '', duration: '1h00m', endTime: '', 
                     location: '', transport: '大眾運輸', transportDuration: '30m', ticket: '',
                     address: '', 
-                    openingHours: initialHours, // structured for modal
+                    openingHours: initialHours, 
                     notes: '', 
                 };
                 currentItemDate.value = date;
                 isModalOpen.value = true;
-                swipedItemId.value = null; // 確保關閉刪除按鈕
+                swipedItemId.value = null; 
             };
 
             const openEditModal = (item, date) => {
-                // 航班和住宿不可編輯，僅供瀏覽
-                if (!isEditMode.value && (item.category === '航班' || item.category === '住宿')) {
-                    // 在瀏覽模式下，點擊這類項目不做任何事，或者可以顯示一個訊息
-                    // 目前的邏輯是直接跳過，維持原樣
-                    // 但在編輯模式下，允許修改非時間/地點的屬性
-                }
-                
                 isEditModalMode.value = true;
                 modalType.value = 'itinerary';
                 modalTitle.value = `編輯: ${item.name}`;
                 
-                // 3. 處理營業時間：從儲存的物件轉為可編輯的結構 (深拷貝以避免直接修改原始資料)
                 const itemCopy = JSON.parse(JSON.stringify(item));
                 
                 if (itemCopy.openingHours && itemCopy.category !== '航班' && itemCopy.category !== '住宿') {
                     itemCopy.openingHours = parseOpeningHours(itemCopy.openingHours);
                 } else {
-                    // 對於交通、航班/住宿，初始化編輯用的結構 (因為它們可能不會用到)
                     const initialHours = {};
                     daysOfWeek.forEach(day => {
                         initialHours[day + 'Start'] = '';
@@ -1164,13 +1165,13 @@
                 currentItem.value = itemCopy;
                 currentItemDate.value = date;
                 isModalOpen.value = true;
-                swipedItemId.value = null; // 確保關閉刪除按鈕
+                swipedItemId.value = null; 
             };
             
             const openAddItemModal = (type, item = null) => {
                 modalType.value = type;
                 isEditModalMode.value = !!item;
-                swipedItemId.value = null; // 確保關閉刪除按鈕
+                swipedItemId.value = null; 
 
                 if (type === 'shopping') {
                     modalTitle.value = isEditModalMode.value ? `編輯購物: ${item.name}` : '新增購物項目';
@@ -1188,14 +1189,11 @@
 
             const saveItem = () => {
                 if (modalType.value === 'itinerary') {
-                    // 3. 處理營業時間：在儲存前將結構化時間轉換回儲存格式
                     if (currentItem.value.category !== '交通' && currentItem.value.category !== '住宿' && currentItem.value.category !== '航班') {
                          currentItem.value.openingHours = formatOpeningHours(currentItem.value.openingHours);
                     } else {
-                        // 對於交通、航班、住宿，確保 openingHours 是預設物件
                         currentItem.value.openingHours = getNewDefaultOpeningHours();
                     }
-                    // 移除編輯時用的 showHours 狀態
                     delete currentItem.value.showHours;
                     
                     const day = itineraryData.value.find(d => d.date === currentItemDate.value);
@@ -1203,7 +1201,6 @@
                         if (isEditModalMode.value) {
                             const index = day.items.findIndex(i => i.id === currentItem.value.id);
                             if (index !== -1) {
-                                // 核心修正：使用 Object.assign 確保 Vue 響應式狀態不中斷
                                 Object.assign(day.items[index], currentItem.value);
                             }
                         } else {
@@ -1211,7 +1208,7 @@
                         }
                         computeDayTimes(day);
                         day.items.sort((a, b) => {
-                            if (a.category === '航班' || b.category === '航班' || a.category === '住宿' || b.category === '住宿') return 0; // 航班/住宿不參與強制排序，保持手動位置
+                            if (a.category === '航班' || b.category === '航班' || a.category === '住宿' || b.category === '住宿') return 0; 
                             if (!a.startTime || !b.startTime) return 0;
                             return a.startTime.localeCompare(b.startTime);
                         });
@@ -1224,7 +1221,6 @@
                         shoppingList.value.push(currentItem.value);
                     }
                 } else if (modalType.value === 'expense') {
-                    // 自動計算 TWD
                     if (currentItem.value.currency === 'HKD') {
                         currentItem.value.amountTWD = currentItem.value.amount * exchangeRate.value;
                     } else {
@@ -1239,13 +1235,12 @@
                     }
                 }
 
-                triggerSave(); // **儲存到 Firebase**
+                triggerSave(); 
                 closeModal();
             };
 
-            // 2. 【刪除邏輯】新增一個用於內聯刪除的函數
+            // 刪除邏輯
             const toggleInlineDelete = (itemId, type, date) => {
-                // 檢查是否為不可刪除的固定項目 (只有行程有此限制)
                 if (type === 'itinerary') {
                     const day = itineraryData.value.find(d => d.date === date);
                     const item = day ? day.items.find(i => i.id === itemId) : null;
@@ -1257,13 +1252,12 @@
                 }
                 
                 if (swipedItemId.value === itemId) {
-                    swipedItemId.value = null; // 點擊同一個項目，則收回刪除按鈕
+                    swipedItemId.value = null; 
                 } else {
-                    swipedItemId.value = itemId; // 點擊不同項目，則顯示刪除按鈕
+                    swipedItemId.value = itemId; 
                 }
             };
             
-            // 2. 【刪除邏輯】執行刪除動作
             const deleteItemInline = (item, date, type) => {
                 if (type === 'itinerary') {
                     const day = itineraryData.value.find(d => d.date === date);
@@ -1278,7 +1272,7 @@
                 }
                 
                 swipedItemId.value = null;
-                triggerSave(); // **儲存到 Firebase**
+                triggerSave(); 
             };
 
             // --- 拖曳/排序邏輯 (略) ---
@@ -1287,7 +1281,7 @@
                 if (!day) return;
                 const item = day.items[index];
                 if (item.category === '航班' || item.category === '住宿') {
-                    event.preventDefault(); // 禁止拖曳
+                    event.preventDefault(); 
                     return;
                 }
                 dragStartIndex.value = index;
@@ -1303,18 +1297,16 @@
             };
 
             const handleDragOver = (event, index, date) => {
-                if (draggingDate.value !== date) return; // 只能在同一天拖曳
+                if (draggingDate.value !== date) return; 
                 
                 const day = itineraryData.value.find(d => d.date === date);
                 if (!day || dragStartIndex.value === -1) return;
 
                 const targetItem = day.items[index];
-                if (targetItem.category === '航班' || targetItem.category === '住宿') return; // 航班/住宿不可作為目標
+                if (targetItem.category === '航班' || targetItem.category === '住宿') return; 
 
-                // 視覺提示
                 day.items.forEach((item, i) => {
                     const element = event.currentTarget.parentElement.children[i];
-                    // 確保元素存在且不是正在拖曳的項目
                     if(element && i !== dragStartIndex.value) element.querySelector('.p-4').classList.remove('border-dashed', 'border-2', 'border-deep-red');
                 });
                 event.currentTarget.querySelector('.p-4').classList.add('border-dashed', 'border-2', 'border-deep-red');
@@ -1334,7 +1326,6 @@
                 const draggedItem = day.items.splice(dragStartIndex.value, 1)[0];
                 day.items.splice(dropIndex, 0, draggedItem);
                 
-                // 重新計算時間並保存
                 computeDayTimes(day);
                 triggerSave();
             };
@@ -1343,7 +1334,7 @@
             // 暴露所有需要的變量和函數
             return {
                 isEditMode, isMenuOpen, activeTab, selectedShoppingCategory, 
-                // 1. 【選單重排】: 花費記錄在最下方
+                // 選單項目
                 menus: [ 
                     { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
                     { tab: 'info', name: '旅行資訊', icon: 'fas fa-info-circle' },
@@ -1352,9 +1343,12 @@
                     { tab: 'expense', name: '花費記錄', icon: 'fas fa-hand-holding-usd' },
                 ], 
                 activeDate, categories, daysOfWeek, timeSlots, 
+                // 1. 暴露停留時間選項和格式化函數
+                durationSlots,
+                formatDurationForDisplay,
+                
                 itineraryData, flightInfo, accommodationInfo, shoppingList, expenses, 
                 foreignAmount, exchangeRate, payers,
-                // 2. 刪除滑動狀態
                 swipedItemId,
                 isModalOpen, isEditModalMode, 
                 modalTitle, modalType, currentItem, currentItemDate,
@@ -1365,7 +1359,6 @@
                 
                 getWeatherIcon, getCategoryClasses, getTransportIcon, openGoogleMaps, closeModal, getCurrentDay,
                 openAddModal, openEditModal, openAddItemModal, saveItem, 
-                // 2. 刪除滑動功能
                 toggleInlineDelete, deleteItemInline,
                 handleDragStart, handleDragEnd, handleDrop, handleDragOver, handleDragLeave,
             };
