@@ -414,9 +414,13 @@ createApp({
 
     const totalExpenseTWD = computed(()=> expenses.value.reduce((s,i)=> s + (i.amountTWD||0),0));
 
-    return { isEditMode, toggleEditMode, isMenuOpen, orderedMenus, setActiveTab, activeTab, activeDate, itineraryData, flightInfo, shoppingList, expenses, exchangeRate, foreignAmount, openAddModal, openEditModal, isModalOpen, currentItem, modalTitle, modalType, saveItem, closeModal, isEditModalMode, categories, payers, openAddItemModal: (t)=>{ modalType.value=t; isModalOpen.value=true; isEditModalMode.value=false; currentItem.value={id:Date.now(),name:'',category:'伴手禮',notes:''}; modalTitle.value='新增'; }, onItemClick, onTouchStart, onTouchMove, onTouchEnd, onPointerStart, onPointerMove, onPointerEnd, onSwipeDelete, weekDays, hours, minutes, getCategoryClasses, getLeftColor, totalExpenseTWD, shoppingList, modalTitle, currentItemDate, currentItem, isEditModalMode
-  }
-}).mount('#app');
+    return {
+          isEditMode, toggleEditMode, isMenuOpen, orderedMenus,
+          setActiveTab, activeTab, activeDate, itineraryData,
+          flightInfo, shoppingList, expenses, exchangeRate,
+          foreignAmount, openAddModal, openEditModal, isModalOpen,
+          currentItem, modalTitle, modalType, saveItem, closeModal,
+          isEditModalMode, categories, pay.mount('#app');
 </script>
 </body>
 </html>
