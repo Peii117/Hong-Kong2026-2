@@ -32,7 +32,7 @@
         /* 模態視窗過渡效果 */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to {opacity: 0; }
-        /* 機票卡片虛線效果 (略) */
+        /* 機票卡片虛線效果 */
         .ticket-card {
             background-color: white;
             background-size: 100% 100%;
@@ -64,7 +64,7 @@
         .ticket-cutout-right {
             right: -10px;
         }
-        /* 2. 刪除滑動動畫 (模擬) */
+        /* 刪除滑動動畫 */
         .slide-delete-enter-active, .slide-delete-leave-active {
             transition: transform 0.3s ease-out;
         }
@@ -635,7 +635,6 @@
                                           class="w-full p-2 border rounded-md focus:ring-royal-blue focus:border-royal-blue"></textarea>
                                 </div>
                             </div>
-
                             </div>
                         <p class="text-xs text-red-500 mt-2">注意：航班/住宿為固定項目，不可拖曳或刪除，只能修改內容。交通行程不需停留時間 (Duration)。</p>
                     </template>
@@ -818,9 +817,9 @@
 </div> <script>
     const { createApp, ref, computed, watch, nextTick } = Vue;
 
-    // --- Firebase Setup (已替換為您的配置) ---
+    // --- Firebase Setup (請替換為您自己的配置) ---
     const firebaseConfig = {
-        apiKey: "AIzaSyD-gOroKPdB2Ao0LDKNC1uEeTDcTRaAeao",
+        apiKey: "AIzaSyD-gOroKPdB2Ao0LDKNC1uEeTDcTRaAeao", // 請替換！
         authDomain: "hong-kong-2026.firebaseapp.com",
         databaseURL: "https://hong-kong-2026-default-rtdb.firebaseio.com",
         projectId: "hong-kong-2026",
@@ -887,7 +886,7 @@
     }
 
 
-    // --- 核心時間連動計算引擎 (略) ---
+    // --- 核心時間連動計算引擎 ---
     function computeDayTimes(day) {
         let currentTime = null;
         const defaultStartTime = '09:00'; 
@@ -960,7 +959,7 @@
             const selectedShoppingCategory = ref('all');
             const selectedFoodCategory = ref('all'); // 新增美食篩選狀態
             const categories = ['景點', '住宿', '美食', '購物', '交通', '其他'];
-            const foodCategories = ['尖沙嘴', '中環', '油麻地', '灣仔', '旺角', '其他']; // 新增美食分類
+            const foodCategories = ['尖沙嘴', '中環', '油麻地', '灣仔', '旺角', '其他']; // 修正點 2: 新增美食分類
             const payers = ['沛晴', '芳晨', '玟妤'];
             const swipedItemId = ref(null);
             
@@ -977,7 +976,7 @@
             const exchangeRate = ref(4.00); 
             const foreignAmount = ref(100); 
 
-            // 3. 星期幾和時間選項
+            // 星期幾和時間選項
             const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             const timeSlots = (() => {
                 const slots = [];
@@ -989,7 +988,7 @@
                 return slots;
             })();
             
-            // 1. 【更新】停留時間選項 (10分鐘到18小時)
+            // 停留時間選項
             const durationSlots = (() => {
                 const slots = [];
                 let totalMinutes = 0;
@@ -1058,7 +1057,6 @@
             ];
 
             const initialData = {
-                itinerary: defaultItinerary,
                 flightInfo: {
                     to: { from: 'TPE', to: 'HKG', number: 'JX233', depTime: '08:00', arrTime: '10:10', duration: '2h10m', model: 'A321neo' },
                     back: { from: 'HKG', to: 'TPE', number: 'CI910', depTime: '14:04', arrTime: '15:50', duration: '1h46m', model: 'B777-300ER' }
@@ -1072,14 +1070,15 @@
                     { id: 2, name: '迪士尼紀念公仔', category: '紀念品', notes: '只買兩隻' }
                 ],
                 foodList: [ // 預設美食清單
-                    { id: 1, name: '添好運點心專門店', category: '尖沙嘴', location: '添好運尖沙嘴店', address: '尖沙嘴廣東道30號', duration: '1h00m', startTime: '11:00', 
+                    { id: 1, name: '添好運點心專門店 (中環店)', category: '中環', location: '添好運中環店', address: '中環香港站12A鋪', duration: '1h00m', startTime: '11:00', 
                       openingHours: {Mon: '10:00-22:00', Tue: '10:00-22:00', Wed: '10:00-22:00', Thu: '10:00-22:00', Fri: '10:00-23:00', Sat: '09:00-23:00', Sun: '09:00-22:00', notes: '不接受訂位'}, notes: '' }
                 ],
                 expenses: [
                     { id: 1, name: '機票費用', category: '機票', date: '2025/12/10', amount: 8000, currency: 'TWD', paymentMethod: '信用卡', payer: '沛晴', amountTWD: 8000 },
                     { id: 2, name: '飯店住宿', category: '住宿', date: '2026/3/6', amount: 1500, currency: 'HKD', paymentMethod: '電子支付', payer: '芳晨', amountTWD: 6000 },
                     { id: 3, name: '午餐點心', category: '飲食', date: '2026/3/6', amount: 150, currency: 'HKD', paymentMethod: '現金', payer: '玟妤', amountTWD: 600 },
-                ]
+                ],
+                itinerary: defaultItinerary,
             };
 
             // --- Firebase 資料讀取與監聽 (略) ---
@@ -1198,7 +1197,7 @@
                 return shoppingList.value.filter(item => item.category === selectedShoppingCategory.value);
             });
             
-            // 美食清單篩選
+            // 修正點 2: 美食清單篩選
             const filteredFoodList = computed(() => {
                 if (selectedFoodCategory.value === 'all') {
                     return foodList.value;
@@ -1231,7 +1230,7 @@
                 return 'fas fa-bus-alt';
             };
             
-            // Google Maps 導航連結 (已修正)
+            // Google Maps 導航連結
             const openGoogleMaps = (location) => {
                 const encodedLocation = encodeURIComponent(location);
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
@@ -1297,7 +1296,7 @@
                     location: '', transport: '大眾運輸', transportDuration: '30m', ticket: '',
                     address: '', 
                     openingHours: initialHours, 
-                    notes: '', // 雖然已移除顯示，但保留notes字段以防萬一
+                    notes: '', // 修正點 3: 雖然移除了顯示/輸入，但保留notes字段以防萬一
                 };
                 currentItemDate.value = date;
                 isModalOpen.value = true;
@@ -1339,7 +1338,7 @@
                     currentItem.value = item ? 
                         JSON.parse(JSON.stringify(item)) : 
                         { id: Date.now(), name: '', category: '伴手禮', notes: '' };
-                } else if (type === 'food') { // 新增 food modal 邏輯
+                } else if (type === 'food') { // 修正點 2: 新增 food modal 邏輯
                     modalTitle.value = isEditModalMode.value ? `編輯美食: ${item.name}` : '新增美食/餐廳';
                     const itemCopy = item ? JSON.parse(JSON.stringify(item)) : {
                         id: Date.now(), name: '', category: '尖沙嘴', location: '', address: '', duration: '1h00m', startTime: '12:00',
@@ -1392,7 +1391,7 @@
                     } else {
                         shoppingList.value.push(currentItem.value);
                     }
-                } else if (modalType.value === 'food') { // 新增 food save 邏輯
+                } else if (modalType.value === 'food') { // 修正點 2: food save 邏輯
                     // 格式化營業時間
                     currentItem.value.openingHours = formatOpeningHours(currentItem.value.openingHours);
                     
@@ -1449,7 +1448,7 @@
                     }
                 } else if (type === 'shopping') {
                     shoppingList.value = shoppingList.value.filter(i => i.id !== item.id);
-                } else if (type === 'food') { // 新增 food delete 邏輯
+                } else if (type === 'food') { // 修正點 2: food delete 邏輯
                     foodList.value = foodList.value.filter(i => i.id !== item.id);
                 } else if (type === 'expense') {
                     expenses.value = expenses.value.filter(i => i.id !== item.id);
@@ -1527,7 +1526,6 @@
                     { tab: 'expense', name: '花費記錄', icon: 'fas fa-hand-holding-usd' },
                 ], 
                 activeDate, categories, daysOfWeek, timeSlots, foodCategories,
-                // 1. 暴露停留時間選項和格式化函數
                 durationSlots,
                 formatDurationForDisplay,
                 
