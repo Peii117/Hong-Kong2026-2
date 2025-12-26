@@ -7,246 +7,259 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
-
     <style>
         :root {
-            --color-blue: #4169E1; /* 萊茵藍 */
-            --color-red: #D93025;  /* 港風紅 */
-            --color-bg: #F5F7F8;
+            --color-blue: #4169E1; 
+            --color-red: #D93025;
+            --color-bg-ext: #F5F7F8;
         }
         .bg-royal-blue { background-color: var(--color-blue); }
         .text-royal-blue { color: var(--color-blue); }
         .bg-deep-red { background-color: var(--color-red); }
         .text-deep-red { color: var(--color-red); }
+        .bg-extension { background-color: var(--color-bg-ext); }
+        .hide-scrollbar {-ms-overflow-style: none; scrollbar-width: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* 機票卡片虛線效果 */
-        .ticket-card { position: relative; background: white; border-radius: 12px; }
+        .date-item.day-of-week { font-size: 1.1rem; }
+        .date-item.date-num {font-size: 2rem; line-height: 1; font-weight: 700; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to {opacity: 0; }
+        .ticket-card { background-color: white; position: relative; }
         .ticket-card::after {
-            content: ""; position: absolute; bottom: 45px; left: 0; right: 0;
-            height: 1px; background-image: linear-gradient(to right, #ccc 50%, transparent 50%);
+            content: ""; position: absolute; bottom: 40px; left: 0; right: 0; height: 1px;
+            background-image: linear-gradient(to right, #ccc 50%, transparent 50%);
             background-size: 15px 1px; background-repeat: repeat-x;
         }
-        .ticket-cutout {
+        .ticket-cutout-left, .ticket-cutout-right {
             position: absolute; bottom: 35px; width: 20px; height: 20px;
-            background-color: var(--color-bg); border-radius: 50%; z-index: 10;
+            background-color: white; border-radius: 50%; z-index: 10;
         }
+        .ticket-cutout-left { left: -10px; }
+        .ticket-cutout-right { right: -10px; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div id="app" class="max-w-md mx-auto shadow-2xl bg-[#F5F7F8] min-h-screen pb-20">
-        
-        <header class="bg-royal-blue text-white p-4 sticky top-0 z-40 shadow-lg">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-white/10 p-2 rounded-full w-12 h-12 flex items-center justify-center">
-                        <i :class="currentWeather.icon" class="text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-wider">三美女遊香港</h1>
-                        <p class="text-xs opacity-80">
-                            香港：{{ currentWeather.description }} {{ currentWeather.temp }}°C 
-                            <span class="ml-2">| 匯率 1 : {{ exchangeRate }}</span>
-                        </p>
-                    </div>
-                </div>
-                <button @click="toggleEditMode" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-sm transition">
-                    <i :class="isEditMode ? 'fas fa-check' : 'fas fa-edit'"></i>
-                    {{ isEditMode ? '完成' : '編輯' }}
-                </button>
-            </div>
-        </header>
+<body class="bg-extension min-h-screen">
+<div id="app" class="max-w-md mx-auto shadow-2xl bg-white min-h-screen">
 
-        <nav class="flex overflow-x-auto bg-white border-b sticky top-[72px] z-30 hide-scrollbar">
-            <button v-for="menu in menus" :key="menu.tab" 
-                @click="activeTab = menu.tab"
-                :class="activeTab === menu.tab ? 'text-royal-blue border-b-2 border-royal-blue font-bold' : 'text-gray-500'"
-                class="flex-shrink-0 px-6 py-3 text-sm transition-all">
-                <i :class="menu.icon" class="mr-1"></i> {{ menu.name }}
+    <header class="relative">
+        <div class="h-[250px] overflow-hidden relative bg-extension">
+            <img src="Gemini_Generated_Image_y689rxy689rxy689.jpg" alt="港式復古橫幅" class="w-full h-full object-cover mx-auto absolute top-[-10px]">
+        </div>
+        <div class="h-8 bg-white z-10"></div>
+        <div class="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
+            <button @click="toggleEditMode" :class="{'bg-deep-red text-white shadow-xl': isEditMode, 'bg-white/90 text-gray-700': !isEditMode}" class="p-2 rounded-full transition duration-300 shadow-md flex items-center text-sm">
+                <i :class="isEditMode ? 'fas fa-pen-nib' : 'fas fa-eye'" class="mr-1"></i>
+                {{ isEditMode ? '編輯中' : '瀏覽模式' }}
             </button>
-        </nav>
+            <button @click="isMenuOpen = !isMenuOpen" class="p-3 rounded-xl bg-white/90 text-gray-700 shadow-md hover:bg-white">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+        </div>
+    </header>
 
-        <main class="p-4">
-            <section v-if="activeTab === 'itinerary'">
-                <div class="flex space-x-3 overflow-x-auto pb-4 hide-scrollbar">
-                    <div v-for="day in itineraryData" :key="day.date"
-                        @click="activeDate = day.date"
-                        :class="activeDate === day.date ? 'bg-royal-blue text-white shadow-lg' : 'bg-white text-gray-600'"
-                        class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition">
-                        <span class="text-xs">{{ day.dayOfWeek }}</span>
-                        <span class="text-2xl font-bold">{{ day.date.split('/')[2] }}</span>
+    <Transition name="fade">
+        <div v-if="isMenuOpen" class="fixed inset-0 z-40">
+            <div @click="isMenuOpen = false" class="absolute inset-0 bg-black opacity-40"></div>
+            <div class="absolute top-0 right-0 w-64 bg-white h-full shadow-2xl p-6">
+                <h3 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">功能選單</h3>
+                <ul class="space-y-4">
+                    <li v-for="menu in menus" :key="menu.tab" @click="setActiveTab(menu.tab)" :class="{'bg-deep-red text-white shadow-md': activeTab === menu.tab, 'text-gray-700 hover:bg-gray-100': activeTab !== menu.tab}" class="p-3 rounded-lg flex items-center cursor-pointer transition duration-200">
+                        <i :class="menu.icon" class="w-5 mr-3"></i>
+                        <span>{{ menu.name }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </Transition>
+
+    <main class="-mt-8 pt-8 relative z-0">
+        <Transition name="fade" mode="out-in">
+            <section v-if="activeTab === 'itinerary'" key="itinerary">
+                <div class="p-4 pt-0">
+                    <div class="bg-blue-50 p-3 rounded-xl flex items-center shadow-sm border-l-4 border-royal-blue">
+                        <i :class="liveWeather.icon" class="text-3xl mr-3 flex-shrink-0" :style="{color: liveWeather.iconColor}"></i>
+                        <div class="flex-grow">
+                            <div class="font-bold text-gray-800 flex justify-between items-center">
+                                <span>香港即時天氣：{{ liveWeather.description }}</span>
+                                <span class="text-xs font-normal text-red-500">降雨: {{ liveWeather.rainProb }}%</span>
+                            </div>
+                            <p class="text-sm text-gray-600">氣溫: {{ liveWeather.temp }}°C / {{ liveWeather.suggestion }}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div v-for="day in itineraryData" :key="'list-'+day.date">
-                    <div v-if="activeDate === day.date" class="space-y-4">
-                        <div v-for="(item, idx) in day.items" :key="item.id" 
-                            class="bg-white p-4 rounded-xl shadow-sm border-l-4"
-                            :style="{'border-left-color': item.category === '航班' ? '#9CA3AF' : '#D93025'}">
-                            
-                            <div v-if="item.category === '航班'" class="ticket-card p-2">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-bold text-gray-400">FLIGHT {{ item.flightNumber }}</span>
-                                    <i class="fas fa-plane text-royal-blue"></i>
-                                </div>
-                                <div class="flex justify-between text-center">
-                                    <div><p class="text-xl font-bold">{{ item.startTime }}</p><p class="text-xs text-gray-400">HKG</p></div>
-                                    <div class="flex-grow flex items-center justify-center px-4">
-                                        <div class="border-t border-dashed w-full relative">
-                                            <i class="fas fa-plane absolute -top-2 left-1/2 -translate-x-1/2 text-gray-300"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-deep-red pl-2 px-4">每日行程表</h2>
+                <div class="flex overflow-x-scroll space-x-4 pb-4 px-4 hide-scrollbar">
+                    <div v-for="day in itineraryData" :key="day.date" @click="activeDate = day.date" :class="{'bg-royal-blue text-white shadow-xl': activeDate === day.date, 'bg-white border border-gray-200 text-gray-700': activeDate !== day.date}" class="flex-shrink-0 date-item w-16 h-16 flex flex-col items-center justify-center rounded-xl cursor-pointer transition duration-200">
+                        <span class="day-of-week text-sm">{{ day.dayOfWeek }}</span>
+                        <span class="date-num">{{ day.date.split('/')[2] }}</span>
+                    </div>
+                </div>
+
+                <div class="p-4 pt-0">
+                    <div v-for="day in itineraryData" :key="day.date">
+                        <div v-if="activeDate === day.date">
+                            <button v-if="isEditMode" @click="openAddModal(day.date)" class="w-full bg-green-100 text-green-700 border border-green-300 p-3 rounded-xl mb-4 font-semibold"><i class="fas fa-plus mr-1"></i> 新增行程項目</button>
+                            <div class="space-y-4">
+                                <div v-for="(item, index) in day.items" :key="item.id" @click="openEditModal(item, day.date)" class="bg-white rounded-xl shadow-lg border-l-4 relative overflow-hidden" :style="{'border-left-color': item.category === '航班' ? '#9CA3AF' : item.category === '住宿' ? '#4169E1' : '#D93025'}">
+                                    <div class="p-4">
+                                        <div v-if="index > 0" class="mb-2 text-xs text-gray-500 flex items-center font-mono">
+                                            <i :class="getTransportIcon(item.transport)" class="mr-1"></i>
+                                            <span class="ml-1"> ➔ {{ item.transportDuration }}</span>
                                         </div>
+                                        <template v-if="item.category === '航班'">
+                                            <div class="relative bg-gray-100 p-4 rounded-xl ticket-card border border-gray-300">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">航班</span>
+                                                    <span class="text-xl font-mono font-bold text-deep-red">{{ item.flightNumber }}</span>
+                                                </div>
+                                                <div class="grid grid-cols-3 gap-2 text-sm text-gray-700">
+                                                    <div><p class="font-bold text-lg">{{ item.startTime }}</p><p class="text-xs text-gray-500">{{ item.fromAirport }}</p></div>
+                                                    <div class="text-center"><i class="fas fa-plane text-royal-blue"></i></div>
+                                                    <div class="text-right"><p class="font-bold text-lg">{{ item.endTime }}</p><p class="text-xs text-gray-500">{{ item.toAirport }}</p></div>
+                                                </div>
+                                                <div class="ticket-cutout-left"></div><div class="ticket-cutout-right"></div>
+                                            </div>
+                                        </template>
+                                        <template v-else>
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="getCategoryClasses(item.category)">{{ item.category }}</span>
+                                                    <h3 class="text-lg font-bold mt-1 text-gray-800">{{ item.name }}</h3>
+                                                </div>
+                                                <button @click.stop="openGoogleMaps(item.location)" class="text-royal-blue p-2"><i class="fas fa-route fa-lg"></i></button>
+                                            </div>
+                                            <div class="mt-2 text-sm text-gray-700">
+                                                <i class="far fa-clock mr-1 text-royal-blue"></i><strong>{{ item.startTime }}</strong> - {{ item.endTime }}
+                                            </div>
+                                        </template>
                                     </div>
-                                    <div><p class="text-xl font-bold">{{ item.endTime }}</p><p class="text-xs text-gray-400">TPE</p></div>
-                                </div>
-                                <div class="ticket-cutout -left-7"></div>
-                                <div class="ticket-cutout -right-7"></div>
-                            </div>
-
-                            <div v-else>
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-bold uppercase">{{ item.category }}</span>
-                                        <h3 class="text-lg font-bold mt-1 text-gray-800">{{ item.name }}</h3>
-                                    </div>
-                                    <button v-if="item.location" @click="openMap(item.location)" class="text-royal-blue p-2">
-                                        <i class="fas fa-location-dot"></i>
-                                    </button>
-                                </div>
-                                <div class="mt-2 text-sm text-gray-500 flex items-center">
-                                    <i class="far fa-clock mr-2"></i> {{ item.startTime }} - {{ item.endTime }}
                                 </div>
                             </div>
                         </div>
-                        <button v-if="isEditMode" @click="addItem('itinerary')" class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400">
-                            <i class="fas fa-plus"></i> 新增行程
-                        </button>
                     </div>
                 </div>
             </section>
 
-            <section v-else-if="activeTab === 'info'" class="space-y-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm">
-                    <h3 class="font-bold mb-4 flex items-center text-royal-blue">
-                        <i class="fas fa-calculator mr-2"></i> 即時匯率換算
-                    </h3>
-                    <div class="flex items-center space-x-3">
-                        <div class="flex-grow">
-                            <label class="text-xs text-gray-400">港幣 HKD</label>
-                            <input type="number" v-model="calcHKD" class="w-full text-xl font-bold border-b py-1 outline-none">
-                        </div>
-                        <i class="fas fa-exchange-alt text-gray-300 mt-4"></i>
-                        <div class="flex-grow">
-                            <label class="text-xs text-gray-400">台幣 TWD</label>
-                            <div class="text-xl font-bold text-deep-red py-1 border-b">{{ (calcHKD * exchangeRate).toFixed(0) }}</div>
+            <section v-else-if="activeTab === 'info'" key="info" class="p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-deep-red pl-2">旅行資訊</h2>
+                <div class="bg-blue-50 p-4 rounded-xl mb-6 shadow-md border-t-4 border-royal-blue">
+                    <h3 class="font-bold text-lg mb-2 text-royal-blue"><i class="fas fa-coins mr-1"></i>即時匯率換算 (HKD 兌 TWD)</h3>
+                    <p class="text-sm text-gray-500 mb-3">當前匯率: 1 HKD ≈ {{ exchangeRate.toFixed(2) }} TWD</p>
+                    <div class="flex space-x-2 items-center">
+                        <input type="number" v-model.number="foreignAmount" placeholder="輸入 HKD" class="w-1/2 p-2 border rounded-md">
+                        <span class="text-lg font-bold text-deep-red">=</span>
+                        <div class="w-1/2 p-2 bg-white border rounded-md font-bold text-gray-700">
+                            {{ (foreignAmount * exchangeRate).toFixed(2) }} TWD
                         </div>
                     </div>
                 </div>
             </section>
+        </Transition>
+    </main>
+</div>
 
-            <section v-else-if="activeTab === 'expense'" class="space-y-4">
-                <div class="bg-royal-blue text-white p-6 rounded-3xl shadow-xl">
-                    <p class="text-xs opacity-70">目前累計總花費 (TWD)</p>
-                    <p class="text-4xl font-black mt-1">NT$ {{ totalExpenseTWD.toLocaleString() }}</p>
-                </div>
-                <div v-for="exp in expenses" :key="exp.id" class="bg-white p-4 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold">{{ exp.name }}</p>
-                        <p class="text-xs text-gray-400">{{ exp.date }} · {{ exp.category }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-deep-red font-bold">{{ exp.amount }} {{ exp.currency }}</p>
-                        <p class="text-[10px] text-gray-400">≈ {{ (exp.amount * (exp.currency === 'HKD' ? exchangeRate : 1)).toFixed(0) }} TWD</p>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
 
-    <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+createApp({
+    setup() {
+        // --- 連網數據狀態 ---
+        const liveWeather = ref({
+            temp: '--',
+            description: '載入中...',
+            rainProb: '0',
+            icon: 'fas fa-spinner fa-spin',
+            iconColor: '#9CA3AF',
+            suggestion: '獲取中...'
+        });
+        const exchangeRate = ref(4.15); // 預設值，隨後會被 API 覆蓋
+        const foreignAmount = ref(100);
 
-        createApp({
-            setup() {
-                // 狀態定義
-                const isEditMode = ref(false);
-                const activeTab = ref('itinerary');
-                const activeDate = ref('2026/03/06');
-                const calcHKD = ref(100);
-                const exchangeRate = ref(4.15); // 預設匯率
-                const currentWeather = ref({ temp: '--', description: '讀取中', icon: 'fas fa-spinner fa-spin' });
+        // --- 基礎狀態 ---
+        const isEditMode = ref(false);
+        const activeTab = ref('itinerary');
+        const activeDate = ref('2026/3/6');
+        const isMenuOpen = ref(false);
+        const menus = [
+            { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
+            { tab: 'info', name: '旅行資訊', icon: 'fas fa-info-circle' },
+            { tab: 'shopping', name: '購物清單', icon: 'fas fa-shopping-basket' },
+            { tab: 'food', name: '美食清單', icon: 'fas fa-utensils' },
+            { tab: 'expense', name: '花費記錄', icon: 'fas fa-hand-holding-usd' }
+        ];
 
-                // 選單配置 [cite: 10]
-                const menus = [
-                    { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
-                    { tab: 'info', name: '旅行資訊', icon: 'fas fa-info-circle' },
-                    { tab: 'shopping', name: '購物清單', icon: 'fas fa-shopping-bag' },
-                    { tab: 'expense', name: '花費記錄', icon: 'fas fa-hand-holding-usd' }
-                ];
+        // --- 數據同步與抓取 ---
+        const fetchLiveUpdates = async () => {
+            // 1. 抓取匯率 (Frankfurter API)
+            try {
+                const res = await fetch('https://api.frankfurter.dev/v1/latest?base=HKD&symbols=TWD');
+                const data = await res.json();
+                if (data.rates && data.rates.TWD) {
+                    exchangeRate.value = data.rates.TWD;
+                }
+            } catch (e) { console.error("匯率更新失敗", e); }
 
-                // 範例行程數據 [cite: 12]
-                const itineraryData = ref([
-                    {
-                        date: '2026/03/06', dayOfWeek: 'Fri',
-                        items: [
-                            { id: 1, category: '航班', name: '國泰航空 CX495', flightNumber: 'CX495', startTime: '13:20', endTime: '15:20' },
-                            { id: 2, category: '住宿', name: '香港尖沙咀凱悅酒店', startTime: '16:30', endTime: '17:00', location: 'Hyatt Regency Hong Kong Tsim Sha Tsui' }
-                        ]
-                    }
-                ]);
-
-                const expenses = ref([
-                    { id: 1, name: '機場快線', category: '交通', amount: 110, currency: 'HKD', date: '03/06' }
-                ]);
-
-                // 即時數據抓取邏輯 
-                const fetchLiveUpdate = async () => {
-                    // 1. 抓取匯率 (HKD -> TWD)
-                    try {
-                        const res = await fetch('https://api.frankfurter.dev/v1/latest?base=HKD&symbols=TWD');
-                        const data = await res.json();
-                        exchangeRate.value = data.rates.TWD.toFixed(2);
-                    } catch (e) { console.warn("匯率更新失敗"); }
-
-                    // 2. 抓取香港天氣 (Open-Meteo)
-                    try {
-                        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.2783&longitude=114.1747&current_weather=true');
-                        const data = await res.json();
-                        const code = data.current_weather.weathercode;
-                        const weatherMap = { 0: '晴朗', 1: '晴間多雲', 3: '陰天', 61: '小雨' };
-                        currentWeather.value = {
-                            temp: Math.round(data.current_weather.temperature),
-                            description: weatherMap[code] || '多雲',
-                            icon: code === 0 ? 'fas fa-sun text-yellow-400' : 'fas fa-cloud text-gray-300'
-                        };
-                    } catch (e) { console.warn("天氣更新失敗"); }
+            // 2. 抓取香港天氣 (Open-Meteo API)
+            try {
+                // 香港經緯度: 22.39, 114.10
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.39&longitude=114.10&current_weather=true&daily=precipitation_probability_max&timezone=Asia%2FHong_Kong');
+                const data = await res.json();
+                const current = data.current_weather;
+                const rain = data.daily.precipitation_probability_max[0];
+                
+                // 天氣代碼轉換
+                const weatherMap = {
+                    0: { desc: '晴朗', icon: 'fas fa-sun', color: '#fbbf24' },
+                    1: { desc: '晴間多雲', icon: 'fas fa-cloud-sun', color: '#fbbf24' },
+                    3: { desc: '陰天', icon: 'fas fa-cloud', color: '#9CA3AF' },
+                    61: { desc: '小雨', icon: 'fas fa-cloud-rain', color: '#60a5fa' },
                 };
-
-                // 計算屬性
-                const totalExpenseTWD = computed(() => {
-                    return expenses.value.reduce((sum, item) => {
-                        const rate = item.currency === 'HKD' ? exchangeRate.value : 1;
-                        return sum + (item.amount * rate);
-                    }, 0);
-                });
-
-                // 功能方法
-                const toggleEditMode = () => isEditMode.value = !isEditMode.value;
-                const openMap = (loc) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`, '_blank');
-
-                onMounted(() => {
-                    fetchLiveUpdate();
-                    // 這裡可加入 Firebase 初始化邏輯
-                });
-
-                return {
-                    isEditMode, activeTab, activeDate, menus, itineraryData, expenses,
-                    calcHKD, exchangeRate, currentWeather, totalExpenseTWD,
-                    toggleEditMode, openMap
+                const info = weatherMap[current.weathercode] || { desc: '多雲', icon: 'fas fa-cloud', color: '#9CA3AF' };
+                
+                liveWeather.value = {
+                    temp: Math.round(current.temperature),
+                    description: info.desc,
+                    rainProb: rain,
+                    icon: info.icon,
+                    iconColor: info.color,
+                    suggestion: current.temperature > 20 ? '穿著輕便，帶件薄外套' : '建議穿著防風外套'
                 };
+            } catch (e) { 
+                liveWeather.value.description = "讀取失敗";
+                console.error("天氣更新失敗", e); 
             }
-        }).mount('#app');
-    </script>
+        };
+
+        // --- 行程數據 (這裡應放置您原本的 itineraryData 陣列) ---
+        const itineraryData = ref([
+            { date: '2026/3/6', dayOfWeek: 'FRI', items: [
+                { id: 1, category: '航班', flightNumber: 'JX233', fromAirport: 'TPE', toAirport: 'HKG', startTime: '08:00', endTime: '10:10', transport: '航班', transportDuration: '0m' },
+                { id: 2, category: '住宿', name: '尖沙咀飯店', startTime: '11:30', endTime: '12:00', location: '尖沙咀' }
+            ]}
+        ]);
+
+        // --- 輔助方法 ---
+        const getTransportIcon = (t) => t === '步行' ? 'fas fa-walking' : 'fas fa-subway';
+        const getCategoryClasses = (c) => c === '美食' ? 'bg-yellow-100 text-yellow-700' : 'bg-royal-blue/10 text-royal-blue';
+        const setActiveTab = (tab) => { activeTab.value = tab; isMenuOpen.value = false; };
+        const toggleEditMode = () => { isEditMode.value = !isEditMode.value; };
+        const openGoogleMaps = (loc) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`);
+
+        onMounted(() => {
+            fetchLiveUpdates(); // 初始化時抓取最新網路資訊
+        });
+
+        return {
+            liveWeather, exchangeRate, foreignAmount,
+            isEditMode, activeTab, activeDate, isMenuOpen, menus,
+            itineraryData, getTransportIcon, getCategoryClasses, setActiveTab, toggleEditMode, openGoogleMaps
+        };
+    }
+}).mount('#app');
+</script>
 </body>
 </html>
