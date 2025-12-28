@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>香港之旅 - 頁面框架</title>
+    <title>香港之旅 - 旅遊管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,11 +13,11 @@
         .text-royal-blue { color: var(--color-blue); }
         .bg-royal-blue { background-color: var(--color-blue); }
         
-        /* 選單滑出動畫 */
+        /* 選單滑入動畫 */
         .menu-enter-active, .menu-leave-active { transition: transform 0.3s ease; }
         .menu-enter-from, .menu-leave-to { transform: translateX(100%); }
 
-        /* 修正：補上彈窗縮放動畫 */
+        /* 彈窗縮放動畫 */
         .scale-in-center {
             animation: scale-in-center 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
         }
@@ -94,83 +94,59 @@
             </div>
         </section>
         
-        <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-            
-            <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden scale-in-center">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">新增行程項目</h2>
-                        <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">景點名稱</label>
-                            <input v-model="newItem.name" type="text" placeholder="輸入名稱 (如：澳洲牛奶公司)" 
-                                   class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors text-lg">
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">開始時間</label>
-                                <input v-model="newItem.time" type="time" 
-                                       class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">項目類別</label>
-                                <select v-model="newItem.category" 
-                                        class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors bg-transparent">
-                                    <option>景點</option>
-                                    <option>美食</option>
-                                    <option>交通</option>
-                                    <option>購物</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-3 mt-10">
-                        <button @click="showModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
-                        <button @click="addItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
-                            確認新增
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <section v-if="activeTab === 'info'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-info-circle text-5xl mb-3"></i>
                 <p>尚無旅行資訊</p>
             </div>
         </section>
-        
-        <section v-if="activeTab === 'shopping'">
-            <div class="text-center py-20 text-gray-300">
-                <i class="fas fa-shopping-basket text-5xl mb-3"></i>
-                <p>尚無購物項目</p>
-            </div>
-        </section>
 
-        <section v-if="activeTab === 'food'">
+        <section v-if="['shopping', 'food', 'expense'].includes(activeTab)">
             <div class="text-center py-20 text-gray-300">
-                <i class="fas fa-utensils text-5xl mb-3"></i>
-                <p>尚無美食口袋名單</p>
-            </div>
-        </section>
-
-        <section v-if="activeTab === 'expense'">
-            <div class="text-center py-20 text-gray-300">
-                <i class="fas fa-hand-holding-usd text-5xl mb-3"></i>
-                <p>尚無花費記錄</p>
+                <i class="fas fa-folder-open text-5xl mb-3"></i>
+                <p>功能開發中...</p>
             </div>
         </section>
 
     </main>
+
+    <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        
+        <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden scale-in-center">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">新增行程項目</h2>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">景點名稱</label>
+                        <input v-model="newItem.name" type="text" placeholder="例如：維多利亞港" 
+                               class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors text-lg">
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">開始時間</label>
+                            <input v-model="newItem.time" type="time" class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">項目類別</label>
+                            <select v-model="newItem.category" class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors bg-transparent">
+                                <option>景點</option><option>美食</option><option>交通</option><option>購物</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-10">
+                    <button @click="showModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
+                    <button @click="addItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">確認新增</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="p-8 text-center text-gray-300 text-xs">
         &copy; 2024 香港之旅管理系統
@@ -179,25 +155,26 @@
 </div>
 
 <script>
+    // 確保 Vue 已成功載入
     const { createApp, ref, computed } = Vue;
 
-    createApp({
+    const app = createApp({
         setup() {
-            // --- 響應式狀態 ---
+            // 1. 基礎狀態
             const isEditMode = ref(false);
             const isMenuOpen = ref(false);
             const activeTab = ref('itinerary');
-            
-            // --- 修正：定義行程相關變數與方法 ---
+
+            // 2. 彈窗與資料列表
             const showModal = ref(false);
-            const itineraryList = ref([]); // 存儲行程清單
+            const itineraryList = ref([]); // 這裏是關鍵，初始化為空陣列
             const newItem = ref({
                 name: '',
                 time: '09:00',
                 category: '景點'
             });
 
-            // 選單定義
+            // 3. 選單配置
             const menus = [
                 { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
                 { tab: 'info', name: '旅行資訊', icon: 'fas fa-info-circle' },
@@ -206,50 +183,45 @@
                 { tab: 'expense', name: '花費紀錄', icon: 'fas fa-hand-holding-usd' }
             ];
 
-            // 動態標題
+            // 4. 計算屬性
             const pageTitle = computed(() => {
                 const current = menus.find(m => m.tab === activeTab.value);
-                return current ? current.name : '旅遊小幫手';
+                return current ? current.name : '旅遊助手';
             });
 
-            // --- 修正：實作開啟與新增邏輯 ---
+            // 5. 方法 (Methods)
             const openModal = () => {
-                // 開啟前重置輸入框
                 newItem.value = { name: '', time: '09:00', category: '景點' };
                 showModal.value = true;
             };
 
             const addItem = () => {
                 if (!newItem.value.name.trim()) {
-                    alert("請輸入名稱！");
+                    alert('請輸入景點名稱！');
                     return;
                 }
-                // 加入清單
+                // 將新項目加入清單
                 itineraryList.value.push({
                     id: Date.now(),
                     ...newItem.value
                 });
-                // 依時間排序
+                // 自動依據時間排序
                 itineraryList.value.sort((a, b) => a.time.localeCompare(b.time));
-                // 關閉視窗
+                // 關閉彈窗
                 showModal.value = false;
             };
 
-            // --- 重要：必須在此回傳所有模板用到的變數 ---
+            // 6. 重要：回傳所有要在 HTML 中使用的東西
             return {
-                isEditMode,
-                isMenuOpen,
-                activeTab,
-                menus,
-                pageTitle,
-                showModal,
-                itineraryList,
-                newItem,
-                openModal,
-                addItem
+                isEditMode, isMenuOpen, activeTab, menus, pageTitle,
+                showModal, itineraryList, newItem,
+                openModal, addItem
             };
         }
-    }).mount('#app');
+    });
+
+    // 最後掛載到 DOM
+    app.mount('#app');
 </script>
 
 </body>
