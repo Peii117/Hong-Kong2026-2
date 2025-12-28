@@ -62,14 +62,14 @@
     </transition>
 
     <main class="p-4 min-h-[80vh]">
-        /* 每日行程 */
         <section v-if="activeTab === 'itinerary'">
             <div v-if="isEditMode" class="mb-4">
-                <button class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm">
+                <button @click="openModal" class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm hover:bg-gray-50 transition">
                     + 新增日期或行程項目
                 </button>
             </div>
-            <div class="space-y-3">
+        
+            <div v-if="itineraryList.length > 0" class="space-y-3">
                 <div v-for="item in itineraryList" :key="item.id" class="p-4 bg-white border rounded-xl shadow-sm">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-royal-blue">{{ item.time }}</span>
@@ -78,56 +78,13 @@
                     <h3 class="font-bold text-gray-800 mt-1">{{ item.name }}</h3>
                 </div>
             </div>
-            <div class="text-center py-20 text-gray-300">
+        
+            <div v-else class="text-center py-20 text-gray-300">
                 <i class="fas fa-calendar-day text-5xl mb-3"></i>
                 <p>尚無行程資料</p>
             </div>
         </section>
-
-        <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div @click="showModal = false" class="absolute inset-0 bg-black/60"></div>
-            
-            <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-bounce-in">
-                <div class="p-6">
-                    <h2 class="text-xl font-bold mb-4 flex items-center">
-                        <i class="fas fa-plus-circle text-royal-blue mr-2"></i>新增行程項目
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">項目名稱</label>
-                            <input v-model="newItem.name" type="text" placeholder="例如：澳洲牛奶公司" 
-                                   class="w-full border p-3 rounded-xl focus:ring-2 focus:ring-royal-blue outline-none">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">開始時間</label>
-                                <input v-model="newItem.time" type="time" 
-                                       class="w-full border p-3 rounded-xl outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">類別</label>
-                                <select v-model="newItem.category" class="w-full border p-3 rounded-xl outline-none">
-                                    <option>景點</option>
-                                    <option>美食</option>
-                                    <option>購物</option>
-                                    <option>交通</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-3 mt-8">
-                        <button @click="showModal = false" class="flex-1 py-3 text-gray-500 font-bold">取消</button>
-                        <button @click="addItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200">
-                            確認新增
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
         
-        /* 旅遊資訊 */
         <section v-if="activeTab === 'info'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-info-circle text-5xl mb-3"></i>
@@ -135,7 +92,6 @@
             </div>
         </section>
         
-        /* 購物清單 */
         <section v-if="activeTab === 'shopping'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-shopping-basket text-5xl mb-3"></i>
@@ -143,7 +99,6 @@
             </div>
         </section>
 
-        /* 美食清單 */
         <section v-if="activeTab === 'food'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-utensils text-5xl mb-3"></i>
@@ -151,7 +106,6 @@
             </div>
         </section>
 
-        /* 花費紀錄 */
         <section v-if="activeTab === 'expense'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-hand-holding-usd text-5xl mb-3"></i>
