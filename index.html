@@ -39,9 +39,9 @@
         
         <div class="flex items-center space-x-3">
             <button @click="isEditMode = !isEditMode" 
-                    :class="isEditMode ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'"
-                    class="text-xs px-3 py-1 rounded-full font-bold transition">
-                {{ isEditMode ? '退出' : '編輯' }}
+                    :class="isEditMode ? 'bg-red-500 text-white shadow-lg shadow-red-100' : 'bg-gray-100 text-gray-600'"
+                    class="text-xs px-4 py-1.5 rounded-full font-bold transition-all">
+                {{ isEditMode ? '退出編輯' : '編輯行程' }}
             </button>
             <button @click="isMenuOpen = true" class="text-gray-600 text-xl p-1">
                 <i class="fas fa-bars"></i>
@@ -49,7 +49,7 @@
         </div>
     </header>
 
-    <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 bg-black/50 z-40"></div>
+    <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"></div>
     <transition name="menu">
         <nav v-if="isMenuOpen" class="fixed top-0 right-0 h-full w-64 bg-white z-50 shadow-2xl p-6">
             <div class="flex justify-between items-center mb-8">
@@ -72,37 +72,42 @@
         
         <section v-if="activeTab === 'itinerary'">
             <div v-if="isEditMode" class="mb-4">
-                <button @click="openModal" class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm hover:bg-gray-50 transition">
-                    + 新增行程項目
+                <button @click="openAddModal" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 text-sm hover:bg-gray-50 hover:border-royal-blue hover:text-royal-blue transition-all group">
+                    <i class="fas fa-plus mr-2 group-hover:scale-110 transition-transform"></i>新增行程項目
                 </button>
             </div>
         
             <div v-if="itineraryList.length > 0" class="space-y-3">
                 <div v-for="(item, index) in itineraryList" :key="item.id" 
-                     class="p-4 bg-white border rounded-xl shadow-sm border-l-4 border-royal-blue relative group">
+                     @click="handleItemClick(item, index)"
+                     class="p-4 bg-white border rounded-2xl shadow-sm border-l-4 border-royal-blue relative active:scale-95 transition-all cursor-pointer hover:shadow-md">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center space-x-2">
                             <span class="text-xs font-bold text-royal-blue">
                                 <i class="far fa-clock mr-1"></i>{{ item.time }}
                             </span>
                             <span class="text-[10px] text-gray-400 font-normal">
-                                (停留 {{ item.duration >= 60 ? (item.duration/60) + '小時' : item.duration + '分鐘' }})
+                                (停留 {{ formatDuration(item.duration) }})
                             </span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">{{ item.category }}</span>
-                            <button v-if="isEditMode" @click="deleteItem(index)" class="text-red-400 hover:text-red-600 ml-1">
+                            <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
+                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-1">
                                 <i class="fas fa-trash-alt text-xs"></i>
                             </button>
                         </div>
                     </div>
                     <h3 class="font-bold text-gray-800 mt-1 text-lg">{{ item.name }}</h3>
+                    
+                    <div v-if="isEditMode" class="absolute bottom-2 right-2 text-gray-200">
+                        <i class="fas fa-pen text-[10px]"></i>
+                    </div>
                 </div>
             </div>
             
             <div v-else class="text-center py-20 text-gray-300">
                 <i class="fas fa-calendar-day text-5xl mb-3"></i>
-                <p>尚無行程資料</p>
+                <p>尚無行程資料，點擊編輯開始規劃</p>
             </div>
         </section>
         
@@ -113,19 +118,19 @@
 
     </main>
 
-    <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div v-if="showEditModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="showEditModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         
-        <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden scale-in-center">
+        <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">新增行程項目</h2>
-                    <button @click="showModal = false" class="text-gray-400"><i class="fas fa-times"></i></button>
+                    <h2 class="text-xl font-bold text-gray-800">{{ editingIndex !== null ? '編輯項目' : '新增項目' }}</h2>
+                    <button @click="showEditModal = false" class="text-gray-400"><i class="fas fa-times"></i></button>
                 </div>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">景點名稱</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">景點/項目名稱</label>
                         <input v-model="newItem.name" type="text" placeholder="例如：維多利亞港" 
                                class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none transition-colors text-lg">
                     </div>
@@ -159,15 +164,65 @@
                 </div>
                 
                 <div class="flex space-x-3 mt-10">
-                    <button @click="showModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
-                    <button @click="addItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">確認新增</button>
+                    <button @click="showEditModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
+                    <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
+                        {{ editingIndex !== null ? '更新項目' : '確認新增' }}
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="p-8 text-center text-gray-300 text-xs">
-        &copy; 2024 香港之旅管理系統
+    <div v-if="showDetailModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="showDetailModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        
+        <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="space-y-1">
+                        <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-royal-blue rounded-full font-bold uppercase">{{ selectedItem?.category }}</span>
+                        <h2 class="text-2xl font-bold text-gray-800">{{ selectedItem?.name }}</h2>
+                    </div>
+                    <button @click="showDetailModal = false" class="text-gray-400 p-1"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4 text-gray-600">
+                        <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-royal-blue">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">開始時間</p>
+                            <p class="font-bold text-gray-800">{{ selectedItem?.time }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 text-gray-600">
+                        <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-royal-blue">
+                            <i class="fas fa-hourglass-half text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">預計停留</p>
+                            <p class="font-bold text-gray-800">{{ formatDuration(selectedItem?.duration) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <div class="bg-gray-50 rounded-2xl p-4 text-sm text-gray-500 text-center italic">
+                        <i class="fas fa-info-circle mr-2"></i>更多細節（如備註、地圖等）將在後續功能更新中提供。
+                    </div>
+                </div>
+
+                <button @click="showDetailModal = false" class="w-full mt-8 py-3 bg-gray-800 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition">
+                    知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="p-8 text-center text-gray-300 text-[10px] uppercase tracking-widest">
+        &copy; 2024 HONG KONG TRAVEL MANAGER
     </footer>
 </div>
 
@@ -176,21 +231,27 @@
 
     const app = createApp({
         setup() {
-            // 基礎狀態
+            // --- 狀態定義 ---
             const isEditMode = ref(false);
             const isMenuOpen = ref(false);
             const activeTab = ref('itinerary');
-            const showModal = ref(false);
+            
+            const showEditModal = ref(false);   // 新增/編輯彈窗
+            const showDetailModal = ref(false); // 詳情查看彈窗
+            
+            const editingIndex = ref(null);     // 正在編輯的索引 (null 表示新增)
+            const selectedItem = ref(null);     // 正在查看的項目內容
 
-            // 資料持久化：讀取
-            const savedData = localStorage.getItem('hk_itinerary_storage');
+            // --- 資料持久化 ---
+            const STORAGE_KEY = 'hk_itinerary_v1';
+            const savedData = localStorage.getItem(STORAGE_KEY);
             const itineraryList = ref(savedData ? JSON.parse(savedData) : []);
 
-            // 資料持久化：監聽並儲存
             watch(itineraryList, (newList) => {
-                localStorage.setItem('hk_itinerary_storage', JSON.stringify(newList));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
             }, { deep: true });
 
+            // --- 表單初始值 ---
             const newItem = ref({
                 name: '',
                 time: '09:00',
@@ -211,36 +272,68 @@
                 return current ? current.name : '旅遊助手';
             });
 
-            // 方法
-            const openModal = () => {
-                newItem.value = { name: '', time: '09:00', duration: '60', category: '景點' };
-                showModal.value = true;
+            // --- 方法 ---
+            
+            // 點擊行程處理 (核心功能)
+            const handleItemClick = (item, index) => {
+                if (isEditMode.value) {
+                    // 編輯模式：開啟編輯視窗
+                    editingIndex.value = index;
+                    newItem.value = { ...item }; // 複製一份，避免直接改動原始資料
+                    showEditModal.value = true;
+                } else {
+                    // 非編輯模式：開啟詳情視窗
+                    selectedItem.value = item;
+                    showDetailModal.value = true;
+                }
             };
 
-            const addItem = () => {
+            const openAddModal = () => {
+                editingIndex.value = null;
+                newItem.value = { name: '', time: '09:00', duration: '60', category: '景點' };
+                showEditModal.value = true;
+            };
+
+            const saveItem = () => {
                 if (!newItem.value.name.trim()) {
-                    alert('請輸入景點名稱！');
+                    alert('請輸入景點/項目名稱！');
                     return;
                 }
-                itineraryList.value.push({
-                    id: Date.now(),
-                    ...newItem.value
-                });
+
+                if (editingIndex.value !== null) {
+                    // 編輯更新
+                    itineraryList.value[editingIndex.value] = { ...newItem.value };
+                } else {
+                    // 新增項目
+                    itineraryList.value.push({
+                        id: Date.now(),
+                        ...newItem.value
+                    });
+                }
+
                 // 自動依據時間排序
                 itineraryList.value.sort((a, b) => a.time.localeCompare(b.time));
-                showModal.value = false;
+                showEditModal.value = false;
             };
 
             const deleteItem = (index) => {
-                if (confirm('確定要刪除此行程嗎？')) {
+                if (confirm('確定要刪除這項行程嗎？')) {
                     itineraryList.value.splice(index, 1);
                 }
             };
 
+            const formatDuration = (mins) => {
+                const m = parseInt(mins);
+                if (m >= 60) {
+                    return `${m / 60} 小時`;
+                }
+                return `${m} 分鐘`;
+            };
+
             return {
                 isEditMode, isMenuOpen, activeTab, menus, pageTitle,
-                showModal, itineraryList, newItem,
-                openModal, addItem, deleteItem
+                showEditModal, showDetailModal, itineraryList, newItem, selectedItem, editingIndex,
+                handleItemClick, openAddModal, saveItem, deleteItem, formatDuration
             };
         }
     });
