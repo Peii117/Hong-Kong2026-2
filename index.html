@@ -80,7 +80,14 @@
             <div v-if="itineraryList.length > 0" class="space-y-3">
                 <div v-for="item in itineraryList" :key="item.id" class="p-4 bg-white border rounded-xl shadow-sm border-l-4 border-royal-blue">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-royal-blue"><i class="far fa-clock mr-1"></i>{{ item.time }}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-royal-blue">
+                                <i class="far fa-clock mr-1"></i>{{ item.time }}
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-normal">
+                                (停留 {{ item.duration >= 60 ? (item.duration/60) + '小時' : item.duration + '分鐘' }})
+                            </span>
+                        </div>
                         <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">{{ item.category }}</span>
                     </div>
                     <h3 class="font-bold text-gray-800 mt-1 text-lg">{{ item.name }}</h3>
@@ -109,7 +116,7 @@
 
     </main>
     
-    <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4"> // 每日行程 - 編輯
+    <div v-if="showModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         
         <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden scale-in-center">
