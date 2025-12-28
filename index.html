@@ -62,7 +62,7 @@
     </transition>
 
     <main class="p-4 min-h-[80vh]">
-        
+        // 每日行程
         <section v-if="activeTab === 'itinerary'">
             <div v-if="isEditMode" class="mb-4">
                 <button class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm">
@@ -74,14 +74,16 @@
                 <p>尚無行程資料</p>
             </div>
         </section>
-
+        
+        // 旅遊資訊
         <section v-if="activeTab === 'info'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-info-circle text-5xl mb-3"></i>
                 <p>尚無旅行資訊</p>
             </div>
         </section>
-
+        
+        // 購物清單
         <section v-if="activeTab === 'shopping'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-shopping-basket text-5xl mb-3"></i>
@@ -89,6 +91,7 @@
             </div>
         </section>
 
+        // 美食清單
         <section v-if="activeTab === 'food'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-utensils text-5xl mb-3"></i>
@@ -96,6 +99,7 @@
             </div>
         </section>
 
+        //花費紀錄
         <section v-if="activeTab === 'expense'">
             <div class="text-center py-20 text-gray-300">
                 <i class="fas fa-hand-holding-usd text-5xl mb-3"></i>
