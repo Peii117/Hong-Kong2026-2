@@ -7,14 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
+        /* 定義全域顏色變數，方便統一修改視覺風格 */
         :root { --color-blue: #4169E1; --color-red: #D93025; }
         .text-royal-blue { color: var(--color-blue); }
         .bg-royal-blue { background-color: var(--color-blue); }
         
-        /* 右側選單動畫 */
+        /* 右側功能選單的進入與離開動畫 (Vue Transition 使用) */
         .menu-enter-active, .menu-leave-active { transition: transform 0.3s ease; }
-        .menu-enter-from, .menu-leave-to { transform: translateX(100%); }
+        .menu-enter-from, .menu-leave-to { transform: translateX(100%); } /* 從右側 100% 處滑入/滑出 */
     </style>
 </head>
 <body class="bg-gray-50">
@@ -40,6 +42,7 @@
     </header>
 
     <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 bg-black/50 z-40"></div>
+    
     <transition name="menu">
         <nav v-if="isMenuOpen" class="fixed top-0 right-0 h-full w-64 bg-white z-50 shadow-2xl p-6">
             <div class="flex justify-between items-center mb-8">
@@ -113,12 +116,13 @@
 
     createApp({
         setup() {
-            // 狀態控制
-            const isEditMode = ref(false);
-            const isMenuOpen = ref(false);
-            const activeTab = ref('itinerary');
+            // --- 響應式狀態 (State) ---
+            const isEditMode = ref(false);    // 是否為編輯模式
+            const isMenuOpen = ref(false);    // 側邊選單是否開啟
+            const activeTab = ref('itinerary'); // 當前激活的分頁 ID
 
-            // 選單定義
+            // --- 資料定義 (Data) ---
+            // 定義選單的項目、對應的分頁 ID 以及使用的圖示
             const menus = [
                 { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
                 { tab: 'info', name: '旅行資訊', icon: 'fas fa-info-circle' },
@@ -127,12 +131,14 @@
                 { tab: 'expense', name: '花費紀錄', icon: 'fas fa-hand-holding-usd' }
             ];
 
-            // 動態標題
+            // --- 計算屬性 (Computed) ---
+            // 根據目前的 activeTab 自動從 menus 陣列中找尋對應的名稱作為標題
             const pageTitle = computed(() => {
                 const current = menus.find(m => m.tab === activeTab.value);
                 return current ? current.name : '旅遊小幫手';
             });
 
+            // 將變數與方法暴露給 HTML 模板使用
             return {
                 isEditMode,
                 isMenuOpen,
@@ -141,7 +147,7 @@
                 pageTitle
             };
         }
-    }).mount('#app');
+    }).mount('#app'); // 將 Vue 實例掛載到 id 為 app 的元素上
 </script>
 
 </body>
