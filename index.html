@@ -69,16 +69,6 @@
                 </button>
             </div>
         
-            <div v-if="itineraryList.length > 0" class="space-y-3">
-                <div v-for="item in itineraryList" :key="item.id" class="p-4 bg-white border rounded-xl shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-royal-blue">{{ item.time }}</span>
-                        <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500">{{ item.category }}</span>
-                    </div>
-                    <h3 class="font-bold text-gray-800 mt-1">{{ item.name }}</h3>
-                </div>
-            </div>
-        
             <div v-else class="text-center py-20 text-gray-300">
                 <i class="fas fa-calendar-day text-5xl mb-3"></i>
                 <p>尚無行程資料</p>
