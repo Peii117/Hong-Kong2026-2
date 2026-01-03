@@ -23,7 +23,7 @@
 </head>
 <body class="bg-gray-50">
 
-<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-20">
+<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-24">
 
     <header class="sticky top-0 z-30 bg-white border-b p-4">
         <div class="flex justify-between items-center mb-2">
@@ -37,7 +37,7 @@
             <button @click="isEditMode = !isEditMode" 
                     :class="isEditMode ? 'bg-red-500 text-white shadow-lg shadow-red-100' : 'bg-gray-100 text-gray-600'"
                     class="text-xs px-5 py-2 rounded-full font-bold transition-all active:scale-90">
-                {{ isEditMode ? '退出編輯' : '編輯模式' }}
+                {{ isEditMode ? '完成編輯' : '編輯行程' }}
             </button>
         </div>
 
@@ -48,14 +48,14 @@
                  class="w-full h-16 border-2 border-dashed rounded-2xl flex items-center justify-center transition-all">
                 <i class="fas fa-plus mr-2" :class="isEditMode ? 'text-red-500' : 'text-gray-300'"></i>
                 <span class="text-xs font-bold" :class="isEditMode ? 'text-red-500' : 'text-gray-400'">
-                    {{ isEditMode ? '點擊設定起訖日期' : '請進入編輯模式設定日期' }}
+                    {{ isEditMode ? '點擊設定起訖日期' : '請切換到編輯模式設定日期' }}
                 </span>
             </div>
 
             <div v-else class="flex items-center space-x-2 overflow-x-auto no-scrollbar w-full">
                 <button v-if="isEditMode" @click="showRangeModal = true" 
                         class="flex-shrink-0 w-10 h-10 border-2 border-red-500 border-dashed rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
-                    <i class="fas fa-cog text-xs"></i>
+                    <i class="fas fa-calendar-alt text-xs"></i>
                 </button>
                 <button v-for="(date, index) in tripDates" :key="date.id"
                         @click="activeDateId = date.id"
@@ -81,25 +81,26 @@
                     <div v-for="item in currentItinerary" :key="item.id" 
                          @click="handleItemClick(item)"
                          :class="[getBorderColor(item.category), getShadowColor(item.category)]"
-                         class="p-5 bg-white border border-gray-100 rounded-[1.8rem] border-l-[6px] flex justify-between items-center shadow-sm active:scale-[0.98] transition-all cursor-pointer">
+                         class="p-5 bg-white border border-gray-100 rounded-[1.8rem] border-l-[6px] flex justify-between items-center shadow-sm active:scale-95 transition-all cursor-pointer relative overflow-hidden">
                         <div class="flex-1 pr-2">
                             <div class="flex items-center space-x-2 mb-1">
                                 <span class="text-sm font-bold text-gray-700"><i class="far fa-clock mr-1 text-royal-blue"></i>{{ item.time }}</span>
                             </div>
                             <h3 class="font-bold text-gray-800 text-lg leading-tight">{{ item.name }}</h3>
-                            
-                            <div class="mt-2 flex items-center">
-                                <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name)" 
-                                   target="_blank" @click.stop
-                                   class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-[10px] font-bold hover:bg-gray-200 transition-colors">
-                                    <i class="fas fa-map-marker-alt mr-1.5"></i>查看地圖
-                                </a>
-                            </div>
                         </div>
 
                         <div class="flex flex-col items-center space-y-2">
-                            <span :class="getCategoryStyles(item.category)" class="w-20 py-1 text-center rounded-xl text-[10px] font-bold border">{{ item.category }}</span>
-                            <button v-if="isEditMode" @click.stop="deleteItem('itinerary', item.id)" class="text-red-400 text-[10px] font-bold px-2 py-1"><i class="fas fa-trash-alt mr-1"></i>刪除</button>
+                            <span :class="getCategoryStyles(item.category)" class="w-20 py-1 text-center rounded-xl text-[10px] font-bold border transition-colors">{{ item.category }}</span>
+                            
+                            <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name)" 
+                               target="_blank" @click.stop
+                               class="w-20 py-1 flex items-center justify-center bg-gray-100 text-gray-500 rounded-xl text-[10px] font-bold border border-gray-200 active:bg-gray-200 transition-all shadow-sm">
+                                <i class="fas fa-map-marker-alt mr-1"></i>地圖
+                            </a>
+
+                            <button v-if="isEditMode" @click.stop="deleteItem('itinerary', item.id)" class="text-red-400 text-[10px] font-bold">
+                                <i class="fas fa-trash-alt mr-1"></i>刪除
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -109,58 +110,54 @@
         </section>
 
         <section v-if="activeTab === 'info'" class="scale-in-center space-y-4">
-            <div v-for="(note, idx) in travelNotes" :key="idx" class="p-4 bg-blue-50 border border-blue-100 rounded-2xl relative shadow-sm">
-                <button v-if="isEditMode" @click="deleteItem('info', idx)" class="absolute top-3 right-3 text-red-300"><i class="fas fa-times-circle"></i></button>
-                <h4 class="font-bold text-royal-blue text-sm mb-1"><i class="fas fa-bookmark mr-2 opacity-50"></i>{{ note.title }}</h4>
-                <p class="text-gray-600 text-sm whitespace-pre-wrap leading-relaxed">{{ note.content }}</p>
+            <div v-for="(note, idx) in travelNotes" :key="idx" class="p-4 bg-blue-50 border border-blue-100 rounded-2xl relative">
+                <button v-if="isEditMode" @click="deleteItem('info', idx)" class="absolute top-2 right-3 text-red-300"><i class="fas fa-times"></i></button>
+                <h4 class="font-bold text-royal-blue text-sm mb-1">{{ note.title }}</h4>
+                <p class="text-gray-600 text-sm whitespace-pre-wrap">{{ note.content }}</p>
             </div>
-            <div v-if="isEditMode" class="bg-white border-2 border-dashed rounded-3xl p-5 mt-6">
-                <input v-model="tempNote.title" placeholder="標題 (如: 電壓、緊急電話)" class="w-full mb-3 p-2 text-sm font-bold outline-none border-b focus:border-royal-blue">
-                <textarea v-model="tempNote.content" placeholder="內容詳情..." class="w-full p-2 text-sm outline-none h-24 resize-none"></textarea>
-                <button @click="addItem('info')" class="w-full py-3 bg-royal-blue text-white rounded-2xl text-xs font-bold mt-2 shadow-lg shadow-blue-100">新增資訊卡片</button>
+            <div v-if="isEditMode" class="bg-white border-2 border-dashed rounded-2xl p-4">
+                <input v-model="tempNote.title" placeholder="標題 (如: 護照)" class="w-full mb-2 p-2 text-sm font-bold outline-none border-b">
+                <textarea v-model="tempNote.content" placeholder="內容..." class="w-full p-2 text-sm outline-none h-20"></textarea>
+                <button @click="addItem('info')" class="w-full py-2 bg-royal-blue text-white rounded-xl text-xs font-bold">新增資訊</button>
             </div>
         </section>
 
         <section v-if="activeTab === 'shopping' || activeTab === 'food'" class="scale-in-center">
-            <div class="bg-gray-50 rounded-[2rem] p-3">
+            <div class="bg-gray-50 rounded-3xl p-2">
                 <div v-for="(item, idx) in currentList" :key="idx" 
-                     @click="item.done = !item.done"
-                     class="flex items-center justify-between p-4 bg-white rounded-2xl mb-2 shadow-sm cursor-pointer active:bg-gray-50 transition-colors">
+                     class="flex items-center justify-between p-4 bg-white rounded-2xl mb-2 shadow-sm">
                     <div class="flex items-center space-x-3">
-                        <div class="text-xl">
-                            <i :class="item.done ? 'fas fa-check-circle text-emerald-500' : 'far fa-circle text-gray-200'"></i>
-                        </div>
-                        <span :class="{'line-through text-gray-300': item.done}" class="font-bold text-gray-700">{{ item.name }}</span>
+                        <input type="checkbox" v-model="item.done" class="w-5 h-5 accent-royal-blue">
+                        <span :class="{'line-through text-gray-400': item.done}" class="font-bold text-gray-700">{{ item.name }}</span>
                     </div>
-                    <button v-if="isEditMode" @click.stop="deleteItem(activeTab, idx)" class="text-red-300 p-2"><i class="fas fa-trash-alt text-sm"></i></button>
+                    <button v-if="isEditMode" @click="deleteItem(activeTab, idx)" class="text-red-300"><i class="fas fa-trash-alt text-sm"></i></button>
                 </div>
-                
                 <div v-if="isEditMode" class="mt-4 p-2 flex space-x-2">
-                    <input v-model="newListInput" @keyup.enter="addItem(activeTab)" placeholder="輸入新項目..." class="flex-1 p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-royal-blue text-sm">
-                    <button @click="addItem(activeTab)" class="bg-royal-blue text-white px-6 rounded-2xl font-bold shadow-md shadow-blue-100">新增</button>
+                    <input v-model="newListInput" @keyup.enter="addItem(activeTab)" placeholder="輸入新項目..." class="flex-1 p-3 rounded-2xl border-2 border-gray-100 outline-none focus:border-royal-blue">
+                    <button @click="addItem(activeTab)" class="bg-royal-blue text-white px-6 rounded-2xl font-bold">新增</button>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t nav-shadow flex justify-around items-center py-3 px-2 z-40 max-w-md mx-auto">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t nav-shadow flex justify-around items-center py-3 px-2 z-40 max-w-md mx-auto">
         <button v-for="m in menus" :key="m.tab" @click="activeTab = m.tab"
                 :class="activeTab === m.tab ? 'text-royal-blue' : 'text-gray-300'"
-                class="flex flex-col items-center transition-all w-full">
+                class="flex flex-col items-center transition-all">
             <i :class="m.icon" class="text-xl mb-1"></i>
-            <span class="text-[9px] font-black uppercase tracking-tighter">{{ m.name }}</span>
-            <div v-if="activeTab === m.tab" class="w-1 h-1 bg-royal-blue rounded-full mt-1"></div>
+            <span class="text-[9px] font-black uppercase">{{ m.name }}</span>
         </button>
     </nav>
 
     <div v-if="showRangeModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
         <div @click="showRangeModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-3xl p-6 scale-in-center">
-            <h2 class="text-xl font-bold mb-6">設定旅行日期</h2>
+            <h2 class="text-xl font-bold mb-6 flex items-center"><i class="fas fa-calendar-day mr-3 text-red-500"></i>設定旅行日期</h2>
             <div class="space-y-4">
                 <input v-model="tempRange.start" type="date" class="w-full border-b-2 p-2 outline-none">
                 <input v-model="tempRange.end" type="date" class="w-full border-b-2 p-2 outline-none">
+                <div v-if="calculatedDays > 0" class="bg-red-50 p-4 rounded-2xl text-center text-red-500 font-bold">共 {{ calculatedDays }} 天行程</div>
             </div>
             <div class="flex space-x-3 mt-8">
                 <button @click="showRangeModal = false" class="flex-1 py-3 text-gray-400 font-bold">取消</button>
@@ -171,45 +168,38 @@
 
     <div v-if="showEditModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="showEditModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white w-full max-w-sm rounded-3xl p-6 scale-in-center overflow-hidden">
-            <h2 class="text-xl font-bold mb-6 text-gray-800">Day {{ currentDayNumber }} 行程安排</h2>
+        <div class="relative bg-white w-full max-w-sm rounded-3xl p-6 scale-in-center max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-6">{{ isNewItem ? '新增行程 - Day ' + currentDayNumber : '修改行程' }}</h2>
             <div class="space-y-5">
-                <input v-model="newItem.name" placeholder="景點或餐廳名稱" class="w-full border-b-2 p-2 text-lg font-bold outline-none focus:border-royal-blue">
-                <div class="flex space-x-4">
-                    <input v-model="newItem.time" type="time" class="flex-1 border-b-2 p-2 outline-none">
-                    <select v-model="newItem.category" class="flex-1 border-b-2 p-2 outline-none">
+                <input v-model="newItem.name" placeholder="景點名稱" class="w-full border-b-2 p-2 text-lg font-bold outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input v-model="newItem.time" type="time" class="border-b-2 p-2 outline-none">
+                    <select v-model="newItem.category" class="border-b-2 p-2 outline-none">
                         <option>景點</option><option>美食</option><option>交通</option><option>購物</option>
                     </select>
                 </div>
-                <textarea v-model="newItem.notes" placeholder="補充說明..." class="w-full border-2 rounded-2xl p-4 outline-none text-sm h-28 resize-none"></textarea>
+                <textarea v-model="newItem.notes" placeholder="備註..." class="w-full border-2 rounded-xl p-3 outline-none text-sm h-24"></textarea>
             </div>
             <div class="flex space-x-3 mt-8">
                 <button @click="showEditModal = false" class="flex-1 py-3 text-gray-400 font-bold">取消</button>
-                <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold">儲存項目</button>
+                <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold">儲存</button>
             </div>
         </div>
     </div>
 
     <div v-if="showDetailModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="showDetailModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white w-full max-w-sm rounded-[2.5rem] p-8 scale-in-center">
-            <div class="text-center">
-                <span :class="getCategoryStyles(selectedItem?.category)" class="px-4 py-1 rounded-full font-bold text-[10px]">{{ selectedItem?.category }}</span>
-                <h2 class="text-2xl font-black text-gray-800 mt-4 leading-tight">{{ selectedItem?.name }}</h2>
-            </div>
-            <div class="flex justify-around bg-gray-50 rounded-2xl p-4 my-6">
-                <div class="text-center"><p class="text-[10px] text-gray-400 font-bold uppercase mb-1">時間</p><p class="font-bold text-gray-800">{{ selectedItem?.time }}</p></div>
+        <div class="relative bg-white w-full max-w-sm rounded-3xl p-8 scale-in-center text-center">
+            <span :class="getCategoryStyles(selectedItem?.category)" class="px-4 py-1 rounded-full font-bold text-[10px]">{{ selectedItem?.category }}</span>
+            <h2 class="text-2xl font-black text-gray-800 mt-4">{{ selectedItem?.name }}</h2>
+            <div class="flex justify-center space-x-8 my-6 py-4 bg-gray-50 rounded-2xl">
+                <div><p class="text-[10px] text-gray-400 font-bold">時間</p><p class="font-bold">{{ selectedItem?.time }}</p></div>
                 <div class="w-px bg-gray-200"></div>
-                <div class="text-center"><p class="text-[10px] text-gray-400 font-bold uppercase mb-1">類型</p><p class="font-bold text-gray-800">{{ selectedItem?.category }}</p></div>
+                <div><p class="text-[10px] text-gray-400 font-bold">類型</p><p class="font-bold">{{ selectedItem?.category }}</p></div>
             </div>
-            <div v-if="selectedItem?.notes" class="mb-8 p-4 bg-gray-50 rounded-2xl text-left">
-                <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">備註</p>
-                <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{ selectedItem?.notes }}</p>
-            </div>
-            <div class="space-y-3">
-                <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" target="_blank" class="block w-full py-4 bg-royal-blue text-white rounded-2xl font-bold shadow-lg shadow-blue-100 text-center"><i class="fas fa-location-arrow mr-2"></i>開始地圖導航</a>
-                <button @click="showDetailModal = false" class="block w-full py-3 text-gray-400 font-bold">返回</button>
-            </div>
+            <p v-if="selectedItem?.notes" class="text-sm text-gray-500 mb-6 text-left bg-gray-50 p-4 rounded-xl whitespace-pre-wrap">{{ selectedItem?.notes }}</p>
+            <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" target="_blank" class="block w-full py-4 bg-gray-100 rounded-2xl font-bold mb-3"><i class="fas fa-map-marked-alt mr-2"></i>地圖導航</a>
+            <button @click="showDetailModal = false" class="text-gray-400 font-bold">關閉</button>
         </div>
     </div>
 
@@ -228,15 +218,12 @@
             const isNewItem = ref(true);
             const selectedItem = ref(null);
 
-            // 資料庫版本 (如有改架構建議換名以重置)
-            const STORAGE_KEY = 'hk_v12_';
-
-            const tripRange = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'range') || '{"start":"","end":""}'));
-            const tripDates = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'dates') || '[]'));
-            const itineraryList = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'itinerary') || '[]'));
-            const travelNotes = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'notes') || '[{"title":"旅行須知","content":"香港電壓：220V\n插座：英規三腳平頭。"}]'));
-            const shoppingList = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'shop') || '[]'));
-            const foodList = ref(JSON.parse(localStorage.getItem(STORAGE_KEY+'food') || '[]'));
+            const tripRange = ref(JSON.parse(localStorage.getItem('hk_range_v11') || '{"start":"","end":""}'));
+            const tripDates = ref(JSON.parse(localStorage.getItem('hk_dates_v11') || '[]'));
+            const itineraryList = ref(JSON.parse(localStorage.getItem('hk_itinerary_v11') || '[]'));
+            const travelNotes = ref(JSON.parse(localStorage.getItem('hk_info_v11') || '[{"title":"重要叮嚀","content":"香港插座為英規三腳平頭。"}]'));
+            const shoppingList = ref(JSON.parse(localStorage.getItem('hk_shop_v11') || '[]'));
+            const foodList = ref(JSON.parse(localStorage.getItem('hk_food_v11') || '[]'));
 
             const activeDateId = ref(tripDates.value[0]?.id || '');
             const tempRange = ref({ ...tripRange.value });
@@ -255,12 +242,12 @@
             const currentList = computed(() => activeTab.value === 'shopping' ? shoppingList.value : foodList.value);
 
             watch([tripRange, tripDates, itineraryList, travelNotes, shoppingList, foodList], () => {
-                localStorage.setItem(STORAGE_KEY+'range', JSON.stringify(tripRange.value));
-                localStorage.setItem(STORAGE_KEY+'dates', JSON.stringify(tripDates.value));
-                localStorage.setItem(STORAGE_KEY+'itinerary', JSON.stringify(itineraryList.value));
-                localStorage.setItem(STORAGE_KEY+'notes', JSON.stringify(travelNotes.value));
-                localStorage.setItem(STORAGE_KEY+'shop', JSON.stringify(shoppingList.value));
-                localStorage.setItem(STORAGE_KEY+'food', JSON.stringify(foodList.value));
+                localStorage.setItem('hk_range_v11', JSON.stringify(tripRange.value));
+                localStorage.setItem('hk_dates_v11', JSON.stringify(tripDates.value));
+                localStorage.setItem('hk_itinerary_v11', JSON.stringify(itineraryList.value));
+                localStorage.setItem('hk_info_v11', JSON.stringify(travelNotes.value));
+                localStorage.setItem('hk_shop_v11', JSON.stringify(shoppingList.value));
+                localStorage.setItem('hk_food_v11', JSON.stringify(foodList.value));
             }, { deep: true });
 
             const calculatedDays = computed(() => {
@@ -304,7 +291,7 @@
             };
 
             const saveItem = () => {
-                if(!newItem.value.name) return;
+                if(!newItem.value.name) return alert('請填寫名稱');
                 if(isNewItem.value) itineraryList.value.push({...newItem.value});
                 else {
                     const idx = itineraryList.value.findIndex(i => i.id === newItem.value.id);
@@ -328,7 +315,7 @@
             };
 
             const deleteItem = (type, idOrIdx) => {
-                if(!confirm('確定刪除此項目？')) return;
+                if(!confirm('確定刪除？')) return;
                 if(type === 'itinerary') itineraryList.value = itineraryList.value.filter(i => i.id !== idOrIdx);
                 else if(type === 'info') travelNotes.value.splice(idOrIdx, 1);
                 else if(type === 'shopping') shoppingList.value.splice(idOrIdx, 1);
