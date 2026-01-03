@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        :root { --color-blue: #4169E1; --color-red: #D93025; }
+        :root { --color-blue: #4169E1; }
         .text-royal-blue { color: var(--color-blue); }
         .bg-royal-blue { background-color: var(--color-blue); }
         .menu-enter-active, .menu-leave-active { transition: transform 0.3s ease; }
@@ -75,35 +75,35 @@
             <div v-if="itineraryList.length > 0" class="space-y-3">
                 <div v-for="(item, index) in itineraryList" :key="item.id" 
                      @click="handleItemClick(item, index)"
-                     class="p-4 bg-white border rounded-2xl shadow-sm border-l-4 border-royal-blue relative active:scale-95 transition-all cursor-pointer">
-                    <div class="flex justify-between items-start mb-1">
-                        <div class="flex flex-col">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-bold text-royal-blue"><i class="far fa-clock mr-1"></i>{{ item.time }}</span>
-                                <span class="text-[10px] text-gray-400 font-normal">(停留 {{ formatDuration(item.duration) }})</span>
+                     class="p-5 bg-white border rounded-[2rem] shadow-sm border-l-4 border-royal-blue relative active:scale-95 transition-all cursor-pointer">
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="text-sm font-bold text-royal-blue"><i class="far fa-clock mr-1.5"></i>{{ item.time }}</span>
+                                <span class="text-[11px] text-gray-400 font-normal">(停留 {{ formatDuration(item.duration) }})</span>
                             </div>
-                            <h3 class="font-bold text-gray-800 mt-1 text-lg">{{ item.name }}</h3>
+                            <h3 class="font-bold text-gray-800 text-xl">{{ item.name }}</h3>
                         </div>
-                        
-                        <div class="flex items-center space-x-2">
+
+                        <div class="flex flex-col items-center space-y-2 ml-4">
+                            <span :class="getCategoryStyles(item.category)" 
+                                  class="w-20 text-center py-1.5 rounded-xl text-[11px] font-bold border transition-colors">
+                                {{ item.category }}
+                            </span>
+
                             <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name)" 
                                target="_blank" 
                                @click.stop
-                               class="flex items-center bg-blue-50 text-royal-blue px-3 py-2 rounded-xl border border-blue-100 active:bg-royal-blue active:text-white transition-all shadow-sm">
-                                <i class="fas fa-location-arrow text-xs mr-1.5"></i>
+                               class="w-20 flex items-center justify-center bg-blue-50 text-royal-blue py-2 rounded-xl border border-blue-100 active:bg-royal-blue active:text-white transition-all shadow-sm">
+                                <i class="fas fa-location-arrow text-[10px] mr-1.5"></i>
                                 <span class="text-xs font-bold">地圖</span>
                             </a>
-                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-2">
+                            
+                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 pt-1">
                                 <i class="fas fa-trash-alt text-xs"></i>
                             </button>
                         </div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-2 mt-2">
-                        <span v-if="item.notes" class="text-royal-blue/60 text-[10px] bg-blue-50 px-2 py-0.5 rounded flex items-center">
-                            <i class="fas fa-sticky-note mr-1"></i>有備註
-                        </span>
-                        <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
                     </div>
                 </div>
             </div>
@@ -165,10 +165,11 @@
         <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
             <div class="p-8">
                 <div class="text-center mb-6">
-                    <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-royal-blue rounded-full font-bold uppercase">{{ selectedItem?.category }}</span>
+                    <span :class="getCategoryStyles(selectedItem?.category)" class="px-4 py-1 rounded-full font-bold uppercase border text-[10px]">
+                        {{ selectedItem?.category }}
+                    </span>
                     <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ selectedItem?.name }}</h2>
                 </div>
-
                 <div class="flex justify-around bg-gray-50 rounded-2xl p-4 mb-6">
                     <div class="text-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">開始時間</p>
@@ -180,29 +181,20 @@
                         <p class="font-bold text-gray-800">{{ formatDuration(selectedItem?.duration) }}</p>
                     </div>
                 </div>
-
                 <div v-if="selectedItem?.notes" class="space-y-2">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">備註資訊</p>
-                    <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                         {{ selectedItem.notes }}
                     </div>
                 </div>
-                
                 <div class="flex space-x-3 mt-8">
-                    <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" 
-                       target="_blank"
-                       class="flex-1 py-3 border-2 border-royal-blue text-royal-blue rounded-2xl font-bold text-center active:scale-95 transition">
-                        <i class="fas fa-map-marked-alt mr-2"></i>地圖導航
-                    </a>
-                    <button @click="showDetailModal = false" class="flex-1 py-3 bg-gray-800 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition">
-                        關閉
-                    </button>
+                    <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" target="_blank" class="flex-1 py-3 border-2 border-royal-blue text-royal-blue rounded-2xl font-bold text-center active:scale-95 transition">地圖導航</a>
+                    <button @click="showDetailModal = false" class="flex-1 py-3 bg-gray-800 text-white rounded-2xl font-bold active:scale-95 transition">關閉</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="p-8 text-center text-gray-300 text-[10px] uppercase tracking-widest">© 2024 HONG KONG TRAVEL MANAGER</footer>
 </div>
 
 <script>
@@ -229,6 +221,17 @@
                 name: '', time: '09:00', duration: 60,
                 hourPart: 1, minPart: 0, category: '景點', notes: ''
             });
+
+            // 色彩與類別對應邏輯
+            const getCategoryStyles = (category) => {
+                const styles = {
+                    '景點': 'bg-blue-50 text-blue-600 border-blue-100',
+                    '美食': 'bg-orange-50 text-orange-600 border-orange-100',
+                    '交通': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                    '購物': 'bg-pink-50 text-pink-600 border-pink-100'
+                };
+                return styles[category] || 'bg-gray-50 text-gray-500 border-gray-100';
+            };
 
             const menus = [
                 { tab: 'itinerary', name: '每日行程', icon: 'fas fa-calendar-alt' },
@@ -262,7 +265,6 @@
             const saveItem = () => {
                 if (!newItem.value.name.trim()) return alert('請輸入景點名稱');
                 const totalMinutes = (newItem.value.hourPart * 60) + parseInt(newItem.value.minPart);
-                
                 const itemData = {
                     id: newItem.value.id || Date.now(),
                     name: newItem.value.name,
@@ -271,13 +273,11 @@
                     category: newItem.value.category,
                     notes: newItem.value.notes
                 };
-
                 if (editingIndex.value !== null) {
                     itineraryList.value[editingIndex.value] = itemData;
                 } else {
                     itineraryList.value.push(itemData);
                 }
-
                 itineraryList.value.sort((a, b) => a.time.localeCompare(b.time));
                 showEditModal.value = false;
             };
@@ -296,7 +296,7 @@
             return {
                 isEditMode, isMenuOpen, activeTab, menus, pageTitle,
                 showEditModal, showDetailModal, itineraryList, newItem, selectedItem, editingIndex,
-                handleItemClick, openAddModal, saveItem, deleteItem, formatDuration
+                handleItemClick, openAddModal, saveItem, deleteItem, formatDuration, getCategoryStyles
             };
         }
     });
