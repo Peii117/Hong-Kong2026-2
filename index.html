@@ -85,13 +85,12 @@
                             <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name)" 
                                target="_blank" 
                                @click.stop
-                               class="text-royal-blue/60 hover:text-royal-blue transition-colors p-1"
+                               class="text-royal-blue/60 hover:text-royal-blue transition-colors p-2 -mr-1"
                                title="在地圖中查看">
-                                <i class="fas fa-map-marker-alt text-xs"></i>
+                                <i class="fas fa-map-marker-alt text-sm"></i>
                             </a>
                             
                             <span v-if="item.notes" class="text-royal-blue/40 text-[10px]"><i class="fas fa-sticky-note"></i></span>
-                            
                             <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
                             <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-1"><i class="fas fa-trash-alt text-xs"></i></button>
                         </div>
@@ -111,13 +110,11 @@
         <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
             <div class="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">{{ editingIndex !== null ? '編輯項目' : '新增項目' }}</h2>
-                
                 <div class="space-y-5">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">景點名稱</label>
                         <input v-model="newItem.name" type="text" placeholder="例如：維多利亞港" class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none text-lg">
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">開始時間</label>
@@ -135,26 +132,20 @@
                             </div>
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">項目類別</label>
                         <select v-model="newItem.category" class="w-full border-b-2 border-gray-100 p-2 focus:border-royal-blue outline-none bg-transparent">
                             <option>景點</option><option>美食</option><option>交通</option><option>購物</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">備註 (選填)</label>
-                        <textarea v-model="newItem.notes" rows="3" placeholder="輸入備註資訊..." 
-                                  class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-royal-blue outline-none text-sm transition-colors resize-none"></textarea>
+                        <textarea v-model="newItem.notes" rows="3" placeholder="輸入備註資訊..." class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-royal-blue outline-none text-sm transition-colors resize-none"></textarea>
                     </div>
                 </div>
-                
                 <div class="flex space-x-3 mt-8">
                     <button @click="showEditModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
-                    <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
-                        儲存項目
-                    </button>
+                    <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">儲存項目</button>
                 </div>
             </div>
         </div>
@@ -181,28 +172,29 @@
                     </div>
                 </div>
 
-                <div v-if="selectedItem?.notes" class="space-y-2">
+                <div v-if="selectedItem?.notes" class="space-y-2 mb-8">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">備註資訊</p>
                     <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                         {{ selectedItem.notes }}
                     </div>
                 </div>
                 
-                <div class="flex space-x-3 mt-8">
+                <div class="space-y-3">
                     <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" 
                        target="_blank"
-                       class="flex-1 py-3 border-2 border-royal-blue text-royal-blue rounded-2xl font-bold text-center active:scale-95 transition">
-                        <i class="fas fa-map-marked-alt mr-2"></i>地圖導航
+                       class="flex items-center justify-center w-full py-4 bg-royal-blue text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-100 active:scale-95 transition">
+                        <i class="fas fa-map-marked-alt mr-3 text-xl"></i>開始 Google 地圖導航
                     </a>
-                    <button @click="showDetailModal = false" class="flex-1 py-3 bg-gray-800 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition">
-                        關閉
+                    
+                    <button @click="showDetailModal = false" class="w-full py-3 text-gray-400 font-bold text-sm active:scale-95 transition">
+                        關閉視窗
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="p-8 text-center text-gray-300 text-[10px] uppercase tracking-widest">&copy; 2024 HONG KONG TRAVEL MANAGER</footer>
+    <footer class="p-8 text-center text-gray-300 text-[10px] uppercase tracking-widest">© 2024 HONG KONG TRAVEL MANAGER</footer>
 </div>
 
 <script>
@@ -218,11 +210,11 @@
             const editingIndex = ref(null);
             const selectedItem = ref(null);
 
-            const savedData = localStorage.getItem('hk_itinerary_v4');
+            const savedData = localStorage.getItem('hk_itinerary_v5');
             const itineraryList = ref(savedData ? JSON.parse(savedData) : []);
 
             watch(itineraryList, (newList) => {
-                localStorage.setItem('hk_itinerary_v4', JSON.stringify(newList));
+                localStorage.setItem('hk_itinerary_v5', JSON.stringify(newList));
             }, { deep: true });
 
             const newItem = ref({
@@ -262,7 +254,6 @@
             const saveItem = () => {
                 if (!newItem.value.name.trim()) return alert('請輸入景點名稱');
                 const totalMinutes = (newItem.value.hourPart * 60) + parseInt(newItem.value.minPart);
-                
                 const itemData = {
                     id: newItem.value.id || Date.now(),
                     name: newItem.value.name,
@@ -271,13 +262,11 @@
                     category: newItem.value.category,
                     notes: newItem.value.notes
                 };
-
                 if (editingIndex.value !== null) {
                     itineraryList.value[editingIndex.value] = itemData;
                 } else {
                     itineraryList.value.push(itemData);
                 }
-
                 itineraryList.value.sort((a, b) => a.time.localeCompare(b.time));
                 showEditModal.value = false;
             };
