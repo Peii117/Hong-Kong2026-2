@@ -19,6 +19,10 @@
             0% { transform: scale(0.7); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
+        /* 自定義捲軸 */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -64,7 +68,7 @@
     <main class="p-4 min-h-[80vh]">
         <section v-if="activeTab === 'itinerary'">
             <div v-if="isEditMode" class="mb-4">
-                <button @click="openAddModal" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 text-sm hover:bg-gray-50 hover:border-royal-blue transition-all group">
+                <button @click="openAddModal" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 text-sm hover:bg-gray-50 hover:border-royal-blue transition-all">
                     <i class="fas fa-plus mr-2"></i>新增行程項目
                 </button>
             </div>
@@ -79,6 +83,7 @@
                             <span class="text-[10px] text-gray-400 font-normal">(停留 {{ formatDuration(item.duration) }})</span>
                         </div>
                         <div class="flex items-center space-x-2">
+                            <span v-if="item.notes" class="text-royal-blue/40 text-[10px]"><i class="fas fa-sticky-note"></i></span>
                             <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
                             <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-1"><i class="fas fa-trash-alt text-xs"></i></button>
                         </div>
@@ -96,7 +101,7 @@
     <div v-if="showEditModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="showEditModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
-            <div class="p-6">
+            <div class="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">{{ editingIndex !== null ? '編輯項目' : '新增項目' }}</h2>
                 
                 <div class="space-y-5">
@@ -129,12 +134,18 @@
                             <option>景點</option><option>美食</option><option>交通</option><option>購物</option>
                         </select>
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">備註 (選填)</label>
+                        <textarea v-model="newItem.notes" rows="3" placeholder="交通方式、必吃美食、景點細節..." 
+                                  class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-royal-blue outline-none text-sm transition-colors resize-none"></textarea>
+                    </div>
                 </div>
                 
-                <div class="flex space-x-3 mt-10">
+                <div class="flex space-x-3 mt-8">
                     <button @click="showEditModal = false" class="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition">取消</button>
                     <button @click="saveItem" class="flex-1 py-3 bg-royal-blue text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition">
-                        {{ editingIndex !== null ? '更新項目' : '確認新增' }}
+                        儲存項目
                     </button>
                 </div>
             </div>
@@ -144,20 +155,34 @@
     <div v-if="showDetailModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="showDetailModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden scale-in-center">
-            <div class="p-8 text-center">
-                <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-royal-blue rounded-full font-bold uppercase">{{ selectedItem?.category }}</span>
-                <h2 class="text-2xl font-bold text-gray-800 mt-2 mb-6">{{ selectedItem?.name }}</h2>
-                <div class="flex justify-around bg-gray-50 rounded-2xl p-4">
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">開始時間</p>
-                        <p class="font-bold text-gray-800 text-lg">{{ selectedItem?.time }}</p>
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-royal-blue rounded-full font-bold uppercase">{{ selectedItem?.category }}</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ selectedItem?.name }}</h2>
+                </div>
+
+                <div class="flex justify-around bg-gray-50 rounded-2xl p-4 mb-6">
+                    <div class="text-center">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">開始時間</p>
+                        <p class="font-bold text-gray-800">{{ selectedItem?.time }}</p>
                     </div>
                     <div class="w-px bg-gray-200"></div>
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">停留時間</p>
-                        <p class="font-bold text-gray-800 text-lg">{{ formatDuration(selectedItem?.duration) }}</p>
+                    <div class="text-center">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">停留時間</p>
+                        <p class="font-bold text-gray-800">{{ formatDuration(selectedItem?.duration) }}</p>
                     </div>
                 </div>
+
+                <div v-if="selectedItem?.notes" class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">備註資訊</p>
+                    <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                        {{ selectedItem.notes }}
+                    </div>
+                </div>
+                <div v-else class="text-center py-4 text-gray-300 text-xs italic">
+                    無備註說明
+                </div>
+
                 <button @click="showDetailModal = false" class="w-full mt-8 py-3 bg-gray-800 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition">關閉</button>
             </div>
         </div>
@@ -179,17 +204,16 @@
             const editingIndex = ref(null);
             const selectedItem = ref(null);
 
-            const savedData = localStorage.getItem('hk_itinerary_v2');
+            const savedData = localStorage.getItem('hk_itinerary_v3');
             const itineraryList = ref(savedData ? JSON.parse(savedData) : []);
 
             watch(itineraryList, (newList) => {
-                localStorage.setItem('hk_itinerary_v2', JSON.stringify(newList));
+                localStorage.setItem('hk_itinerary_v3', JSON.stringify(newList));
             }, { deep: true });
 
-            // 初始表單增加了 hourPart 與 minPart
             const newItem = ref({
                 name: '', time: '09:00', duration: 60,
-                hourPart: 1, minPart: 0, category: '景點'
+                hourPart: 1, minPart: 0, category: '景點', notes: ''
             });
 
             const menus = [
@@ -205,14 +229,9 @@
             const handleItemClick = (item, index) => {
                 if (isEditMode.value) {
                     editingIndex.value = index;
-                    // 將總分鐘數拆分回 小時與分鐘 以供 UI 顯示
                     const hours = Math.floor(item.duration / 60);
                     const mins = item.duration % 60;
-                    newItem.value = { 
-                        ...item, 
-                        hourPart: hours, 
-                        minPart: mins 
-                    };
+                    newItem.value = { ...item, hourPart: hours, minPart: mins, notes: item.notes || '' };
                     showEditModal.value = true;
                 } else {
                     selectedItem.value = item;
@@ -222,14 +241,12 @@
 
             const openAddModal = () => {
                 editingIndex.value = null;
-                newItem.value = { name: '', time: '09:00', hourPart: 1, minPart: 0, category: '景點' };
+                newItem.value = { name: '', time: '09:00', hourPart: 1, minPart: 0, category: '景點', notes: '' };
                 showEditModal.value = true;
             };
 
             const saveItem = () => {
-                if (!newItem.value.name.trim()) return alert('請輸入名稱');
-
-                // 儲存前將 小時 + 分鐘 合併回總分鐘數 (duration)
+                if (!newItem.value.name.trim()) return alert('請輸入景點名稱');
                 const totalMinutes = (newItem.value.hourPart * 60) + parseInt(newItem.value.minPart);
                 
                 const itemData = {
@@ -237,7 +254,8 @@
                     name: newItem.value.name,
                     time: newItem.value.time,
                     duration: totalMinutes,
-                    category: newItem.value.category
+                    category: newItem.value.category,
+                    notes: newItem.value.notes // 儲存備註
                 };
 
                 if (editingIndex.value !== null) {
@@ -250,7 +268,7 @@
                 showEditModal.value = false;
             };
 
-            const deleteItem = (index) => confirm('確定刪除？') && itineraryList.value.splice(index, 1);
+            const deleteItem = (index) => confirm('確定刪除此行程？') && itineraryList.value.splice(index, 1);
 
             const formatDuration = (totalMins) => {
                 const h = Math.floor(totalMins / 60);
