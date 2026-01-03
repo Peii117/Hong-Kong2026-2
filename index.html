@@ -76,26 +76,35 @@
                 <div v-for="(item, index) in itineraryList" :key="item.id" 
                      @click="handleItemClick(item, index)"
                      class="p-4 bg-white border rounded-2xl shadow-sm border-l-4 border-royal-blue relative active:scale-95 transition-all cursor-pointer">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs font-bold text-royal-blue"><i class="far fa-clock mr-1"></i>{{ item.time }}</span>
-                            <span class="text-[10px] text-gray-400 font-normal">(停留 {{ formatDuration(item.duration) }})</span>
+                    <div class="flex justify-between items-start mb-1">
+                        <div class="flex flex-col">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold text-royal-blue"><i class="far fa-clock mr-1"></i>{{ item.time }}</span>
+                                <span class="text-[10px] text-gray-400 font-normal">(停留 {{ formatDuration(item.duration) }})</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mt-1 text-lg">{{ item.name }}</h3>
                         </div>
-                        <div class="flex items-center space-x-3">
+                        
+                        <div class="flex items-center space-x-2">
                             <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name)" 
                                target="_blank" 
                                @click.stop
-                               class="text-royal-blue/60 hover:text-royal-blue transition-colors p-2 -mr-1"
-                               title="在地圖中查看">
-                                <i class="fas fa-map-marker-alt text-sm"></i>
+                               class="flex items-center bg-blue-50 text-royal-blue px-3 py-2 rounded-xl border border-blue-100 active:bg-royal-blue active:text-white transition-all shadow-sm">
+                                <i class="fas fa-location-arrow text-xs mr-1.5"></i>
+                                <span class="text-xs font-bold">地圖</span>
                             </a>
-                            
-                            <span v-if="item.notes" class="text-royal-blue/40 text-[10px]"><i class="fas fa-sticky-note"></i></span>
-                            <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
-                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-1"><i class="fas fa-trash-alt text-xs"></i></button>
+                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 p-2">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
                         </div>
                     </div>
-                    <h3 class="font-bold text-gray-800 mt-1 text-lg">{{ item.name }}</h3>
+                    
+                    <div class="flex items-center space-x-2 mt-2">
+                        <span v-if="item.notes" class="text-royal-blue/60 text-[10px] bg-blue-50 px-2 py-0.5 rounded flex items-center">
+                            <i class="fas fa-sticky-note mr-1"></i>有備註
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">{{ item.category }}</span>
+                    </div>
                 </div>
             </div>
             <div v-else class="text-center py-20 text-gray-300">
@@ -172,22 +181,21 @@
                     </div>
                 </div>
 
-                <div v-if="selectedItem?.notes" class="space-y-2 mb-8">
+                <div v-if="selectedItem?.notes" class="space-y-2">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">備註資訊</p>
                     <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                         {{ selectedItem.notes }}
                     </div>
                 </div>
                 
-                <div class="space-y-3">
+                <div class="flex space-x-3 mt-8">
                     <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" 
                        target="_blank"
-                       class="flex items-center justify-center w-full py-4 bg-royal-blue text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-100 active:scale-95 transition">
-                        <i class="fas fa-map-marked-alt mr-3 text-xl"></i>開始 Google 地圖導航
+                       class="flex-1 py-3 border-2 border-royal-blue text-royal-blue rounded-2xl font-bold text-center active:scale-95 transition">
+                        <i class="fas fa-map-marked-alt mr-2"></i>地圖導航
                     </a>
-                    
-                    <button @click="showDetailModal = false" class="w-full py-3 text-gray-400 font-bold text-sm active:scale-95 transition">
-                        關閉視窗
+                    <button @click="showDetailModal = false" class="flex-1 py-3 bg-gray-800 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition">
+                        關閉
                     </button>
                 </div>
             </div>
@@ -210,11 +218,11 @@
             const editingIndex = ref(null);
             const selectedItem = ref(null);
 
-            const savedData = localStorage.getItem('hk_itinerary_v5');
+            const savedData = localStorage.getItem('hk_itinerary_v4');
             const itineraryList = ref(savedData ? JSON.parse(savedData) : []);
 
             watch(itineraryList, (newList) => {
-                localStorage.setItem('hk_itinerary_v5', JSON.stringify(newList));
+                localStorage.setItem('hk_itinerary_v4', JSON.stringify(newList));
             }, { deep: true });
 
             const newItem = ref({
@@ -254,6 +262,7 @@
             const saveItem = () => {
                 if (!newItem.value.name.trim()) return alert('請輸入景點名稱');
                 const totalMinutes = (newItem.value.hourPart * 60) + parseInt(newItem.value.minPart);
+                
                 const itemData = {
                     id: newItem.value.id || Date.now(),
                     name: newItem.value.name,
@@ -262,11 +271,13 @@
                     category: newItem.value.category,
                     notes: newItem.value.notes
                 };
+
                 if (editingIndex.value !== null) {
                     itineraryList.value[editingIndex.value] = itemData;
                 } else {
                     itineraryList.value.push(itemData);
                 }
+
                 itineraryList.value.sort((a, b) => a.time.localeCompare(b.time));
                 showEditModal.value = false;
             };
