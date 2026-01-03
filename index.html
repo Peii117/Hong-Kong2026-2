@@ -104,8 +104,11 @@
                                 <span class="text-xs font-bold">地圖</span>
                             </a>
                             
-                            <button v-if="isEditMode" @click.stop="deleteItem(index)" class="text-red-300 hover:text-red-500 pt-1">
-                                <i class="fas fa-trash-alt text-xs"></i>
+                            <button v-if="isEditMode" 
+                                    @click.stop="deleteItem(item.id)" 
+                                    class="w-20 py-1 flex items-center justify-center text-red-300 hover:text-red-500 transition-colors">
+                                <i class="fas fa-trash-alt text-[10px] mr-1"></i>
+                                <span class="text-[10px] font-bold">刪除</span>
                             </button>
                         </div>
                     </div>
@@ -168,7 +171,6 @@
                     {{ selectedItem?.category }}
                 </span>
                 <h2 class="text-2xl font-bold text-gray-800 mt-4">{{ selectedItem?.name }}</h2>
-
                 <div class="flex justify-around bg-gray-50 rounded-2xl p-4 my-6">
                     <div class="text-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">開始時間</p>
@@ -180,7 +182,6 @@
                         <p class="font-bold text-gray-800">{{ formatDuration(selectedItem?.duration) }}</p>
                     </div>
                 </div>
-
                 <div class="flex flex-col space-y-3">
                     <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedItem?.name)" target="_blank" class="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold text-center border border-gray-200 active:scale-95 transition shadow-sm">
                         <i class="fas fa-map-marked-alt mr-2 text-gray-500"></i>開啟地圖導航
@@ -191,7 +192,6 @@
         </div>
     </div>
 
-    <footer class="p-8 text-center text-gray-300 text-[10px] uppercase tracking-widest">© 2024 HONG KONG TRAVEL MANAGER</footer>
 </div>
 
 <script>
@@ -207,15 +207,18 @@
             const editingIndex = ref(null);
             const selectedItem = ref(null);
 
-            const savedData = localStorage.getItem('hk_itinerary_v4');
+            // 讀取資料
+            const savedData = localStorage.getItem('hk_itinerary_v5');
             const itineraryList = ref(savedData ? JSON.parse(savedData) : []);
 
+            // 監聽並存檔
             watch(itineraryList, (newList) => {
-                localStorage.setItem('hk_itinerary_v4', JSON.stringify(newList));
+                localStorage.setItem('hk_itinerary_v5', JSON.stringify(newList));
             }, { deep: true });
 
             const newItem = ref({ name: '', time: '09:00', duration: 60, hourPart: 1, minPart: 0, category: '景點' });
 
+            // 樣式對應邏輯
             const getCategoryStyles = (category) => {
                 const styles = {
                     '景點': 'bg-blue-600 text-white border-blue-600',
@@ -256,6 +259,7 @@
 
             const pageTitle = computed(() => menus.find(m => m.tab === activeTab.value)?.name || '旅遊助手');
 
+            // 處理行程點擊
             const handleItemClick = (item, index) => {
                 if (isEditMode.value) {
                     editingIndex.value = index;
@@ -269,12 +273,14 @@
                 }
             };
 
+            // 開啟新增視窗
             const openAddModal = () => {
                 editingIndex.value = null;
-                newItem.value = { name: '', time: '09:00', hourPart: 1, minPart: 0, category: '景點' };
+                newItem.value = { id: Date.now(), name: '', time: '09:00', hourPart: 1, minPart: 0, category: '景點' };
                 showEditModal.value = true;
             };
 
+            // 儲存邏輯
             const saveItem = () => {
                 if (!newItem.value.name.trim()) return alert('請輸入名稱');
                 const totalMinutes = (newItem.value.hourPart * 60) + parseInt(newItem.value.minPart);
@@ -294,7 +300,12 @@
                 showEditModal.value = false;
             };
 
-            const deleteItem = (index) => confirm('確定刪除此行程？') && itineraryList.value.splice(index, 1);
+            // --- 修正後的刪除功能 ---
+            const deleteItem = (id) => {
+                if (confirm('確定要刪除這項行程嗎？')) {
+                    itineraryList.value = itineraryList.value.filter(item => item.id !== id);
+                }
+            };
 
             const formatDuration = (totalMins) => {
                 const h = Math.floor(totalMins / 60);
