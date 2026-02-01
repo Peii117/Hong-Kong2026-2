@@ -177,10 +177,48 @@
             </div>
         </section>
 
-        <section v-if="activeTab !== 'itinerary' && activeTab !== 'info'" class="scale-in-center py-20 text-center text-gray-400">
-            <i class="fas fa-tools mb-4 text-4xl opacity-20"></i>
-            <p class="font-bold">更多功能模組開發中...</p>
-        </section>
+        <section v-if="activeTab === 'shopping'" class="scale-in-center space-y-4">
+            <div v-if="isEditMode" class="mb-4">
+                <button @click="openListModal('shopping')" class="w-full py-4 border-2 border-dashed border-pink-200 rounded-3xl text-pink-500 text-sm font-bold bg-pink-50/30">
+                    <i class="fas fa-cart-plus mr-2"></i>新增購物項目
+                </button>
+            </div>
+            <div v-for="item in shoppingList" :key="item.id" 
+                 @click="isEditMode ? openListModal('shopping', item) : item.checked = !item.checked"
+                 class="p-5 bg-white border border-gray-100 rounded-[2rem] flex justify-between items-center shadow-sm card-transition"
+                 :class="item.checked ? 'opacity-50' : ''">
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800" :class="item.checked ? 'line-through' : ''">{{ item.name }}</h3>
+                    <p class="text-xs text-gray-400 font-medium">{{ item.info || '點擊填寫預算或店名' }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <i :class="item.checked ? 'fas fa-check-circle text-emerald-500' : 'far fa-circle text-gray-300'" class="text-xl"></i>
+                    <button v-if="isEditMode" @click.stop="deleteItem('shopping', item.id)" class="text-red-300 p-2"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div v-if="shoppingList.length === 0" class="text-center py-20 text-gray-300 text-xs font-bold italic">Shopping List is Empty</div>
+        </section>
+
+        <section v-if="activeTab === 'food'" class="scale-in-center space-y-4">
+            <div v-if="isEditMode" class="mb-4">
+                <button @click="openListModal('food')" class="w-full py-4 border-2 border-dashed border-orange-200 rounded-3xl text-orange-500 text-sm font-bold bg-orange-50/30">
+                    <i class="fas fa-utensils mr-2"></i>新增想吃的餐廳
+                </button>
+            </div>
+            <div v-for="item in foodList" :key="item.id" 
+                 @click="isEditMode ? openListModal('food', item) : handleItemClick(item)"
+                 class="p-5 bg-white border border-gray-100 rounded-[2rem] flex justify-between items-center shadow-sm card-transition border-l-[8px] border-orange-400">
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">{{ item.name }}</h3>
+                    <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest">{{ item.info || '未備註必吃菜色' }}</p>
+                </div>
+                <div class="flex items-center">
+                    <button v-if="isEditMode" @click.stop="deleteItem('food', item.id)" class="text-red-300 p-2 mr-2"><i class="fas fa-trash"></i></button>
+                    <i class="fas fa-chevron-right text-gray-200"></i>
+                </div>
+            </div>
+            <div v-if="foodList.length === 0" class="text-center py-20 text-gray-300 text-xs font-bold italic">Hungry? Add some food!</div>
+        </section>
 
     </main>
 
